@@ -1,0 +1,47 @@
+# Flutter
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+*.lock
+!pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Generated
+*.g.dart
+*.freezed.dart
+
+# Windows
+windows/flutter/ephemeral/
+windows/runner/Debug/
+windows/runner/Release/
+
+# MSIX
+*.msix
+*.appx
+*.pfx
+
+# Native build artifacts
+native/*/build/
+
+# Binary files (should not be committed — build from source or download)
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# AI session notes (internal only)
+memories/
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db

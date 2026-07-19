@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, public]
+  pull_request:
+    branches: [main, public]
+
+jobs:
+  analyze-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.29.x
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Run tests
+        run: flutter test

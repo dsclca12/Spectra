@@ -1,0 +1,18 @@
+{
+  "info": "This is a generated file; do not edit it directly.",
+  "projectName": "spectra",
+  "version": "0.1.0",
+  "versionCode": 1,
+  "outputPath": "./build/windows/x64/runner/Debug",
+  "resources": [],
+  "isPortable": false,
+  "isUnpackedOnly": false,
+  "isReleaseOnly": false,
+  "msixConfig": {
+    "display_name": "Spectra",
+    "publisher_display_name": "Spectra Project",
+    "identity_name": "com.spectra.app",
+    "msix_version": "0.1.0.0",
+    "capabilities": "broadFileSystemAccess"
+  }
+}
