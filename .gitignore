@@ -1,4 +1,4 @@
-# Flutter
+# ── Flutter ──
 build/
 .dart_tool/
 .packages
@@ -7,41 +7,77 @@ build/
 *.lock
 !pubspec.lock
 
-# IDE
+# ── IDE / Editor ──
 .idea/
 .vscode/
 *.iml
 *.ipr
 *.iws
+*.swp
+*.swo
+*~
 
-# Generated
+# ── Generated code ──
 *.g.dart
 *.freezed.dart
+*.drift.dart
+*.drift_g.dart
 
-# Windows
+# ── Windows platform ──
 windows/flutter/ephemeral/
 windows/runner/Debug/
 windows/runner/Release/
+windows/runner/x64/
+windows/runner/arm64/
 
-# MSIX
+# ── MSIX packaging ──
 *.msix
 *.appx
 *.pfx
+*.msixbundle
+*.appxbundle
 
-# Native build artifacts
+# ── Native build artifacts ──
 native/*/build/
+native/ort_bridge/build/
+native/preprocess/build/
 
-# Binary files (should not be committed — build from source or download)
+# ── Binary files ──
 *.dll
 *.exe
 *.pdb
 *.so
 *.dylib
+*.lib
+*.exp
+*.obj
 
-# AI session notes (internal only)
+# ── Distribution archives ──
+*.zip
+*.tar.gz
+*.7z
+*.rar
+
+# ── AI / internal notes (not for public) ──
 memories/
+*.session/
 
-# Misc
+# ── Test artifacts ──
+test/.test_combinations/
+test/build/
+coverage/
+*.test.log
+
+# ── OS files ──
 *.log
 .DS_Store
 Thumbs.db
+Desktop.ini
+*.bak
+*.orig
+
+# ── Environment ──
+.env
+.env.local
+*.envrc
+direnv/
