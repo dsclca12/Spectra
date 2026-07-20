@@ -99,7 +99,6 @@ final imageDecoderServiceProvider = Provider<ImageDecoderService>((ref) {
 
 final thumbnailServiceProvider = Provider<ThumbnailService>((ref) {
   return ThumbnailService(
-    photoDao: ref.read(photoDaoProvider),
     imageDecoder: ref.read(imageDecoderServiceProvider),
   );
 });

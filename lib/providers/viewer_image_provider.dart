@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../core/constants.dart';
+import '../core/logging.dart';
 import '../data/database/app_database.dart';
 import '../data/models/photo_ext.dart';
 import 'providers.dart';
@@ -110,8 +111,10 @@ void _cleanStalePreviewsIfNeeded(String previewDir, int currentPhotoId) {
         }
       }
       if (deleted > 0) {
-        // ignore: avoid_print
-        print('预览缓存清理：删除了 $deleted 个过期文件');
+        // 使用 AppLogger 而非 print，统一日志输出格式。
+        // print 在 Flutter 中输出到 stdout，不能被 logcat/dump 过滤；
+        // AppLogger 写入内存环形缓冲区（可在设置界面查看）+ debugPrint。
+        AppLogger.info('PreviewCache', '预览缓存清理：删除了 $deleted 个过期文件');
       }
     } catch (_) {}
   });

@@ -3,25 +3,26 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../database/daos/photo_dao.dart';
 import '../../core/constants.dart';
 import '../../core/concurrency.dart';
 import 'image_decoder_service.dart';
 
 /// 缩略图服务 — 分级缓存生成
 ///
-/// 性能策略：
-/// - 标准格式（JPEG/PNG/WebP/BMP）用 `dart:ui` 原生解码器（Skia/Impeller）
+/// ⚡ 性能策略：
+/// - 标准格式（JPEG/PNG/WebP/BMP/GIF）用 `dart:ui` 原生解码器（Skia/Impeller）
 ///   - 在 native 线程异步执行，不阻塞 UI 线程
 ///   - `targetWidth` 参数直接解码到目标尺寸，无需解码全分辨率
 ///   - 比 `package:image` 快 10-50 倍，内存占用降低 90%+
 /// - RAW/HEIC/AVIF/TIFF 用 Windows WIC（通过 PowerShell + WPF）
 ///   - WIC 是 Windows 内置组件，支持各种 RAW 和 HEIC 格式
 ///   - 需要安装对应的 codec pack（Microsoft Store 免费）
-/// - 内存缓存已生成的缩略图路径，避免重复 DB 查询和文件存在检查
-/// - 信号量限制并发解码数量，避免资源爆炸
+/// - 内存缓存已生成的缩略图路径，避免重复 DB 查询和文件存在检查（LRU 500 条）
+/// - 信号量限制并发解码数量（4 路），避免资源爆炸
+/// - ⚠️ 注意：photoDao 依赖已在优化中移除（缩略图生成不再依赖 DB 状态查询），
+///   构造函数只保留 ImageDecoderService 依赖
 class ThumbnailService {
-  ThumbnailService({required PhotoDao photoDao, required ImageDecoderService imageDecoder})
+  ThumbnailService({required ImageDecoderService imageDecoder})
       : _imageDecoder = imageDecoder;
 
   final ImageDecoderService _imageDecoder;
@@ -69,15 +70,24 @@ class ThumbnailService {
   }
 
   /// 同步生成缩略图
+  ///
+  /// ⚡ 性能说明：
+  /// 1. 三级缓存：内存 LRU → 磁盘文件 → 实时生成，逐级回退
+  /// 2. 内存缓存命中（`_pathCache`）直接返回，O(1) 零 I/O
+  /// 3. 磁盘缓存命中直接返回，完全跳过信号量和解码，零阻塞
+  /// 4. 信号量内二次检查（double-check）：等待信号量期间其他任务可能已生成
+  /// 5. `targetWidth` 让 dart:ui 解码器直接解码到目标尺寸，不解全分辨率
   Future<String?> generate(int photoId, String filePath, {int size = AppConstants.thumbnailSmall}) async {
-    // 内存缓存命中 — 已生成过的直接返回，避免重复 DB 查询
+    // 第一级：内存 LRU 缓存 — photoId_size 格式的 key
+    // 用于单次滚动中反复访问同一缩略图（如网格项重建）
     final cacheKey = '${photoId}_$size';
     if (_pathCache.containsKey(cacheKey)) {
       return _pathCache[cacheKey];
     }
 
-    // 先检查缓存文件是否已存在 — 如果已有缩略图文件，直接返回，完全跳过信号量和 DB 写入
-    // 这是滚动时最常见的情况：缩略图已生成过，只需读文件路径
+    // 第二级：磁盘缓存 — 缩略图已生成过的直接返回
+    // 这是滚动时最常见的情况：缩略图已存在，只需读文件路径
+    // 完全跳过信号量等待和解码流程，零阻塞
     final cacheDir = await _getCacheDir();
     final thumbPath = p.join(cacheDir, '${photoId}_$size.png');
     if (await File(thumbPath).exists()) {
@@ -85,10 +95,10 @@ class ThumbnailService {
       return thumbPath;
     }
 
-    // 信号量限流 — 避免滚动时大量并发解码
+    // 第三级：实时生成 — 信号量限流，避免大量并发解码
     final release = await _generateSemaphore.acquire();
     try {
-      // 再次检查缓存文件（可能在等待信号量期间其他任务已生成）
+      // double-check：等待信号量期间其他任务可能已生成此缩略图
       final thumbFile = File(thumbPath);
       if (await thumbFile.exists()) {
         _setCache(cacheKey, thumbPath);

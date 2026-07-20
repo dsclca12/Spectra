@@ -27,7 +27,7 @@ class AppConstants {
   /// - 主版本号：重大架构变更或不兼容 API
   /// - 次版本号：新功能发布
   /// - 修订号：Bug 修复和性能优化
-  static const String appVersion = '0.4.3';
+  static const String appVersion = '0.4.4';
 
   /// Supported image file extensions (lowercase, no dot).
   ///
