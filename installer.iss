@@ -63,13 +63,13 @@ Source: "build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Fl
 Source: "build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\windows\x64\runner\Release\dartjni.dll"; DestDir: "{app}"; Flags: ignoreversion
 
-; ONNX Runtime
-Source: "build\windows\x64\runner\Release\onnxruntime.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "build\windows\x64\runner\Release\onnxruntime_providers_shared.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "build\windows\x64\runner\Release\ort_bridge.dll"; DestDir: "{app}"; Flags: ignoreversion
+; ONNX Runtime (optional — only included if built; AI/ML features disabled by default)
+Source: "build\windows\x64\runner\Release\onnxruntime.dll"; DestDir: "{app}"; Flags: ignoreversion external
+Source: "build\windows\x64\runner\Release\onnxruntime_providers_shared.dll"; DestDir: "{app}"; Flags: ignoreversion external
+Source: "build\windows\x64\runner\Release\ort_bridge.dll"; DestDir: "{app}"; Flags: ignoreversion external
 
-; Image preprocessing
-Source: "build\windows\x64\runner\Release\nchw_preprocess.dll"; DestDir: "{app}"; Flags: ignoreversion
+; Image preprocessing (optional)
+Source: "build\windows\x64\runner\Release\nchw_preprocess.dll"; DestDir: "{app}"; Flags: ignoreversion external
 
 ; SQLite
 Source: "build\windows\x64\runner\Release\sqlite3.dll"; DestDir: "{app}"; Flags: ignoreversion

@@ -21,8 +21,9 @@ class AppConstants {
   /// Application name.
   static const String appName = 'Spectra';
 
-  /// Application version.
-  static const String appVersion = '0.1.0';
+  /// Application version — 与 version.json 同步。
+  /// 发布新版本时需同时更新 pubspec.yaml 和 version.json。
+  static const String appVersion = '0.4.0';
 
   /// Supported image file extensions (lowercase, no dot).
   ///

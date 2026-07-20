@@ -16,7 +16,10 @@ class GridPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final catalogAsync = ref.watch(catalogProvider);
-    final viewMode = ref.watch(viewModeProvider);
+    // 用 select 隔离 — 仅在视图模式(grid/list/preview)变化时重建面板，
+    // 避免左栏宽度/胶片条高度等其他视图状态变化导致中栏整体重建。
+    // PhotoGrid/PhotoList 内部各自 watch 缩略图尺寸等所需字段。
+    final viewMode = ref.watch(viewModeProvider.select((vm) => vm.mode));
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -32,7 +35,7 @@ class GridPanel extends ConsumerWidget {
             );
           }
 
-          return switch (viewMode.mode) {
+          return switch (viewMode) {
             ViewMode.grid => PhotoGrid(photos: photos),
             ViewMode.list => PhotoList(photos: photos),
             ViewMode.preview => const PreviewPanel(),

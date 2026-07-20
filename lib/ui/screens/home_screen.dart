@@ -12,7 +12,7 @@ import 'import_screen.dart';
 import 'export_screen.dart';
 import '../layout/panels/folder_panel.dart';
 import '../layout/panels/filmstrip_panel.dart';
-import '../layout/panels/grid_panel.dart' show showImportDialog;
+import '../layout/panels/grid_panel.dart';
 import '../layout/panels/info_panel.dart';
 import '../components/filter_bar.dart';
 import '../components/status_bar.dart';

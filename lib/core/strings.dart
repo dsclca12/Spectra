@@ -18,7 +18,7 @@ class AppStrings {
 
   // ─── App ───
   static const String appName = 'Spectra';
-  static const String appVersion = '0.1.0';
+  static const String appVersion = '0.4.0';
   static const String appDescription =
       'Photo categorization & asset management for professional photographers on Windows';
   static const String appLicense = 'Apache 2.0';

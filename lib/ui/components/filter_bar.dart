@@ -16,7 +16,9 @@ class FilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(filterProvider);
-    final viewMode = ref.watch(viewModeProvider);
+    // 用 select 隔离 — 仅监听视图模式用于切换图标，
+    // 避免面板可见性/缩略图尺寸等其他状态变化导致筛选栏重建。
+    final currentMode = ref.watch(viewModeProvider.select((vm) => vm.mode));
 
     return Container(
       height: 40,
@@ -26,7 +28,7 @@ class FilterBar extends ConsumerWidget {
         children: [
           // 视图切换
           _IconButton(
-            icon: viewMode.mode == ViewMode.grid
+            icon: currentMode == ViewMode.grid
                 ? Icons.view_list
                 : Icons.grid_view,
             tooltip: '切换视图',
