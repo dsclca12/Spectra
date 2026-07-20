@@ -74,6 +74,10 @@ class TagDao extends DatabaseAccessor<AppDatabase> with _$TagDaoMixin {
   }
 
   /// 合并标签 — 将源标签的照片关联转移到目标标签
+  ///
+  /// 优化：使用 batch insert 替代逐条 insert，减少事务内的 SQL 往返。
+  /// 原实现 for 循环逐条 insert，N 张照片 = N 次 INSERT。
+  /// 现用 batch.insertAll 单次写入所有关联。
   Future<void> mergeTags(int sourceTagId, int targetTagId) async {
     await transaction(() async {
       // 获取源标签的所有照片关联
@@ -81,16 +85,16 @@ class TagDao extends DatabaseAccessor<AppDatabase> with _$TagDaoMixin {
             ..where((t) => t.tagId.equals(sourceTagId)))
           .get();
 
-      for (final link in sourceLinks) {
-        // 插入到目标标签（忽略冲突）
-        await into(photoTags).insert(
-          PhotoTagsCompanion(
-            photoId: Value(link.photoId),
-            tagId: Value(targetTagId),
-            createdAt: Value(DateTime.now()),
-          ),
-          mode: InsertMode.insertOrIgnore,
-        );
+      // 批量插入目标标签关联（忽略已存在的冲突）
+      final companions = sourceLinks.map((link) => PhotoTagsCompanion(
+        photoId: Value(link.photoId),
+        tagId: Value(targetTagId),
+        createdAt: Value(DateTime.now()),
+      )).toList();
+
+      if (companions.isNotEmpty) {
+        await batch((b) => b.insertAll(photoTags, companions,
+            mode: InsertMode.insertOrIgnore));
       }
 
       // 删除源标签
