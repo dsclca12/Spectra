@@ -1,37 +1,62 @@
 # Auto-detect text files and normalize line endings
 * text=auto eol=lf
 
-# Dart source
+# ── Source code ──
 *.dart text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
+*.json text eol=lf
 
-# C source
+# ── C / C++ ──
 *.c text eol=lf
 *.h text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
 *.cmake text eol=lf
 
-# Documentation
+# ── Documentation ──
 *.md text eol=lf
+*.markdown text eol=lf
+*.rst text eol=lf
+*.txt text eol=lf
 
-# Scripts
+# ── Scripts ──
 *.py text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
 
-# Binary files — keep as-is
+# ── Config files ──
+*.cfg text eol=lf
+*.conf text eol=lf
+*.ini text eol=lf
+*.toml text eol=lf
+
+# ── Binary files — keep as-is ──
 *.onnx binary
 *.png binary
 *.ico binary
 *.jpg binary
+*.jpeg binary
 *.webp binary
 *.gif binary
+*.bmp binary
+*.tif binary
+*.tiff binary
+*.icns binary
+*.woff binary
+*.woff2 binary
 
-# Generated files — diff not useful
+# ── Generated files — diff not useful ──
 *.g.dart binary
 *.freezed.dart binary
+*.drift.dart binary
 
-# Build artifacts
+# ── Build artifacts ──
 *.dll binary
 *.exe binary
 *.pdb binary
+*.lib binary
+*.obj binary
+*.exp binary
