@@ -244,23 +244,28 @@ class PhotoDao extends DatabaseAccessor<AppDatabase> with _$PhotoDaoMixin {
   }
 
   /// 批量查询已存在的路径集合（用于导入去重）
+  ///
+  /// 优化：分批并行查询，使用 Future.wait 同时发起多个 IN 查询。
+  /// 原串行实现在导入 5000 文件时需顺序执行 10 批查询，
+  /// 并行后总耗时接近单批最慢查询的耗时（SQLite 读不互斥，WAL 模式可并发读）。
   Future<Set<String>> getExistingPaths(List<String> paths) async {
     if (paths.isEmpty) return {};
-    // 分批查询避免 SQLite IN 子句过长
     final result = <String>{};
     const batchSize = 500;
+    final futures = <Future<void>>[];
     for (var i = 0; i < paths.length; i += batchSize) {
-      final chunk = paths.sublist(
-        i,
-        (i + batchSize > paths.length) ? paths.length : i + batchSize,
-      );
-      final query = selectOnly(photos)..addColumns([photos.path]);
-      query.where(photos.path.isIn(chunk));
-      final rows = await query.get();
-      for (final row in rows) {
-        result.add(row.read(photos.path)!);
-      }
+      final end = (i + batchSize > paths.length) ? paths.length : i + batchSize;
+      final chunk = paths.sublist(i, end);
+      futures.add(() async {
+        final query = selectOnly(photos)..addColumns([photos.path]);
+        query.where(photos.path.isIn(chunk));
+        final rows = await query.get();
+        for (final row in rows) {
+          result.add(row.read(photos.path)!);
+        }
+      }());
     }
+    await Future.wait(futures);
     return result;
   }
 
