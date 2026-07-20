@@ -36,7 +36,7 @@ void main() {
     });
 
     test('Failure 保存错误', () {
-      final result = Failure(DatabaseException('出错啦'));
+      final result = Failure<String>(DatabaseException('出错啦'));
       expect(result.error, isA<DatabaseException>());
       expect(result.error.message, '出错啦');
     });

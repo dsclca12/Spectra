@@ -99,7 +99,8 @@ class _EditPanelState extends ConsumerState<EditPanel> {
 
   /// 顶部标题栏
   Widget _buildHeader(ThemeData theme) {
-    final session = ref.watch(editSessionProvider(widget.photoId));
+    // Watch session for reactivity even if not used directly in header
+    ref.watch(editSessionProvider(widget.photoId));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -588,7 +589,7 @@ class _EditPanelState extends ConsumerState<EditPanel> {
 
   /// 显示重置确认对话框
   void _showResetConfirm() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('重置编辑'),
@@ -775,7 +776,6 @@ class _GeometryButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Wrap(

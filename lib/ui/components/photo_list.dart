@@ -136,7 +136,7 @@ class _PhotoListTileState extends ConsumerState<_PhotoListTile> {
             now.difference(_lastTapTime!) < const Duration(milliseconds: 300)) {
           _lastTapTime = null;
           Navigator.of(context).push(
-            MaterialPageRoute(
+            MaterialPageRoute<void>(
               builder: (_) => ViewerScreen(photoId: photo.id),
             ),
           );
@@ -153,15 +153,15 @@ class _PhotoListTileState extends ConsumerState<_PhotoListTile> {
       },
       onLongPress: () {
         // 触摸屏长按 = 上下文菜单（与网格一致）
-        showMenu<PopupMenuEntry>(
+        showMenu<void>(
           context: context,
           position: const RelativeRect.fromLTRB(100, 100, 0, 0),
           items: [
-            PopupMenuItem(
+            PopupMenuItem<void>(
               child: const Text('在查看器中打开'),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (_) => ViewerScreen(photoId: photo.id),
                   ),
                 );

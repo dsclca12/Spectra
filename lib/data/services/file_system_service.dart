@@ -163,7 +163,7 @@ class FileSystemService {
   /// 返回一个 Stream，发出文件创建/修改/删除事件
   Stream<FileSystemChangeEvent> watchDirectory(String dirPath) {
     final controller = StreamController<FileSystemChangeEvent>.broadcast();
-    StreamSubscription? sub;
+    StreamSubscription<WatchEvent>? sub;
 
     try {
       final watcher = DirectoryWatcher(dirPath);
@@ -186,7 +186,7 @@ class FileSystemService {
             path: event.path,
           ));
         },
-        onError: (e) => controller.addError(e),
+        onError: (Object e) => controller.addError(e),
         onDone: () => controller.close(),
       );
     } catch (e) {

@@ -62,7 +62,7 @@ class KeyboardShortcuts extends ConsumerWidget {
 
     // Ctrl+I — 导入文件夹
     if (key == LogicalKeyboardKey.keyI && isCtrl) {
-      showDialog(context: context, builder: (_) => const ImportDialog());
+      showDialog<void>(context: context, builder: (_) => const ImportDialog());
       return KeyEventResult.handled;
     }
 
@@ -99,7 +99,7 @@ class KeyboardShortcuts extends ConsumerWidget {
     // Ctrl+, — 打开设置
     if (key == LogicalKeyboardKey.comma && isCtrl) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
       );
       return KeyEventResult.handled;
     }
@@ -207,11 +207,11 @@ class KeyboardShortcuts extends ConsumerWidget {
       if (selection.hasSelection) {
         final firstId = selection.selectedIds.first;
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ViewerScreen(photoId: firstId)),
+          MaterialPageRoute<void>(builder: (_) => ViewerScreen(photoId: firstId)),
         );
       } else if (photoIds.isNotEmpty) {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ViewerScreen(photoId: photoIds.first)),
+          MaterialPageRoute<void>(builder: (_) => ViewerScreen(photoId: photoIds.first)),
         );
       }
       return KeyEventResult.handled;
@@ -222,11 +222,11 @@ class KeyboardShortcuts extends ConsumerWidget {
       if (selection.hasSelection) {
         final firstId = selection.selectedIds.first;
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ViewerScreen(photoId: firstId)),
+          MaterialPageRoute<void>(builder: (_) => ViewerScreen(photoId: firstId)),
         );
       } else if (photoIds.isNotEmpty) {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ViewerScreen(photoId: photoIds.first)),
+          MaterialPageRoute<void>(builder: (_) => ViewerScreen(photoId: photoIds.first)),
         );
       }
       return KeyEventResult.handled;

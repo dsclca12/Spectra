@@ -6,6 +6,7 @@ void main() {
   group('LogEntry', () {
     test('创建 LogEntry 字段正确', () {
       final entry = LogEntry(
+        timestamp: DateTime.now(),
         level: LogLevel.info,
         category: 'Test',
         message: 'Hello',
@@ -19,6 +20,7 @@ void main() {
 
     test('toString 包含关键字段', () {
       final entry = LogEntry(
+        timestamp: DateTime.now(),
         level: LogLevel.warn,
         category: 'Import',
         message: 'Duplicate',

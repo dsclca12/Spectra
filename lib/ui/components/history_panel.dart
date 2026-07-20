@@ -120,7 +120,7 @@ class HistoryPanel extends ConsumerWidget {
   }
 
   void _showClearConfirm(BuildContext context, WidgetRef ref) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('清空历史'),
@@ -284,7 +284,7 @@ class _InitialStateTile extends ConsumerWidget {
   }
 
   void _showRestoreConfirm(BuildContext context, WidgetRef ref) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('恢复到初始状态'),
@@ -398,7 +398,7 @@ class _HistoryTile extends ConsumerWidget {
 
   void _showRestoreConfirm(
       BuildContext context, WidgetRef ref, EditHistoryData entry) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('恢复到此历史节点'),

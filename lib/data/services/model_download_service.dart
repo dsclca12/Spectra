@@ -213,7 +213,7 @@ class ModelDownloadService {
 
     final completer = Completer<String?>();
     HttpClientRequest? request;
-    StreamSubscription? subscription;
+    StreamSubscription<List<int>>? subscription;
 
     try {
       request = await _client.getUrl(uri);
@@ -265,7 +265,7 @@ class ModelDownloadService {
             totalBytes: totalBytes,
           ));
         },
-        onError: (e) {
+        onError: (Object e) {
           sink.close();
           completer.completeError(e);
         },

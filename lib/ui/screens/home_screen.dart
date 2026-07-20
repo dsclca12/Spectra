@@ -107,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showImportDialog(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (_) => const ImportDialog(),
     );
@@ -230,19 +230,19 @@ class _MenuBar extends ConsumerWidget {
 
   void _openSettings(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
     );
   }
 
   void _showExportDialog(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (_) => const ExportDialog(),
     );
   }
 
   void _showAboutDialog(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(
@@ -332,7 +332,7 @@ class _MenuItemState extends State<_MenuItem> {
         ),
       ),
       itemBuilder: (context) => widget.actions
-          .map((action) => PopupMenuItem(
+          .map((action) => PopupMenuItem<void>(
                 enabled: action.onTap != null,
                 onTap: action.onTap,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

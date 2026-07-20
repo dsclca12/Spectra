@@ -113,7 +113,7 @@ class _PhotoGridItemState extends ConsumerState<_PhotoGridItem> {
         },
         onDoubleTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute(
+            MaterialPageRoute<void>(
               builder: (_) => ViewerScreen(photoId: photo.id),
             ),
           );
@@ -235,13 +235,13 @@ class _PhotoGridItemState extends ConsumerState<_PhotoGridItem> {
       overlay.size.height - tapPosition.dy,
     );
 
-    showMenu<PopupMenuEntry>(
+    showMenu<void>(
       context: context,
       position: relativeRect,
       items: [
-        const PopupMenuItem(child: Text('⭐ 评分')),
+        const PopupMenuItem<void>(child: Text('⭐ 评分')),
         for (var i = 5; i >= 1; i--)
-          PopupMenuItem(
+          PopupMenuItem<void>(
             child: Padding(
               padding: const EdgeInsets.only(left: 20),
               child: Text('${'★' * i}${'☆' * (5 - i)} ($i)'),

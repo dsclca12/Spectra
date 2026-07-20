@@ -91,7 +91,7 @@ class PointerTypeService {
   PointerTypeService._internal();
 
   EventChannel? _channel;
-  StreamSubscription? _subscription;
+  StreamSubscription<dynamic>? _subscription;
 
   /// pointerId → 最近一次事件类型。用于查询某个 Flutter pointer 是否为笔。
   final Map<int, WindowsPointerType> _pointerTypes = {};

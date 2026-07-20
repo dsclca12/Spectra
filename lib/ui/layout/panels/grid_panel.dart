@@ -51,7 +51,7 @@ class GridPanel extends ConsumerWidget {
   }
 
   void _showImportDialog(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (_) => const ImportDialog(),
     );

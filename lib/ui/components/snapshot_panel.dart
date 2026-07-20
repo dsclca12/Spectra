@@ -84,7 +84,7 @@ class SnapshotPanel extends ConsumerWidget {
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('创建快照'),
@@ -137,7 +137,8 @@ class _SnapshotTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final params = EditParams.fromJson(
+    // Params loaded; kept for future thumbnail preview
+    final _ = EditParams.fromJson(
       jsonDecode(snapshot.paramsJson) as Map<String, dynamic>,
     );
 
@@ -195,7 +196,7 @@ class _SnapshotTile extends ConsumerWidget {
 
   void _showRenameDialog(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController(text: snapshot.name);
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('重命名快照'),
@@ -227,7 +228,7 @@ class _SnapshotTile extends ConsumerWidget {
   }
 
   void _showDeleteConfirm(BuildContext context, WidgetRef ref) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除快照'),

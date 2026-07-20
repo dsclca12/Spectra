@@ -137,21 +137,21 @@ class FilterBar extends ConsumerWidget {
       position: const RelativeRect.fromLTRB(200, 80, 0, 0),
       items: [
         for (var i = 1; i <= 5; i++)
-          PopupMenuItem(
+          PopupMenuItem<void>(
             child: Text('≥ $i 星'),
             onTap: () {
               ref.read(filterProvider.notifier).state =
                   filter.copyWith(minRating: i);
             },
           ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('未评分'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(minRating: 0, maxRating: 0);
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('清除'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -168,21 +168,21 @@ class FilterBar extends ConsumerWidget {
       context: context,
       position: const RelativeRect.fromLTRB(260, 80, 0, 0),
       items: [
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('🚩 Pick'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(pickLabel: PickLabel.pick);
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('✗ Reject'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(pickLabel: PickLabel.reject);
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('清除'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -209,7 +209,7 @@ class FilterBar extends ConsumerWidget {
       position: const RelativeRect.fromLTRB(320, 80, 0, 0),
       items: [
         for (final c in colors)
-          PopupMenuItem(
+          PopupMenuItem<void>(
             child: Row(
               children: [
                 Container(width: 12, height: 12, color: c.$1),
@@ -224,7 +224,7 @@ class FilterBar extends ConsumerWidget {
               );
             },
           ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('清除'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -251,11 +251,11 @@ class FilterBar extends ConsumerWidget {
 
   void _showDateFilter(BuildContext context, WidgetRef ref) {
     final filter = ref.read(filterProvider);
-    showMenu<PopupMenuEntry>(
+    showMenu<void>(
       context: context,
       position: const RelativeRect.fromLTRB(380, 80, 0, 0),
       items: [
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('今天'),
           onTap: () {
             final now = DateTime.now();
@@ -266,7 +266,7 @@ class FilterBar extends ConsumerWidget {
             );
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('本周'),
           onTap: () {
             final now = DateTime.now();
@@ -278,7 +278,7 @@ class FilterBar extends ConsumerWidget {
             );
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('本月'),
           onTap: () {
             final now = DateTime.now();
@@ -290,7 +290,7 @@ class FilterBar extends ConsumerWidget {
             );
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('今年'),
           onTap: () {
             final now = DateTime.now();
@@ -300,12 +300,12 @@ class FilterBar extends ConsumerWidget {
             );
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('自定义范围...'),
           onTap: () => _showDateRangePicker(context, ref),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('清除'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -342,13 +342,13 @@ class FilterBar extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    showMenu<PopupMenuEntry>(
+    showMenu<void>(
       context: context,
       position: const RelativeRect.fromLTRB(440, 80, 0, 0),
       items: [
         for (final entry in cameraModels.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value)))
-          PopupMenuItem(
+          PopupMenuItem<void>(
             child: Text('${entry.key} (${entry.value})'),
             onTap: () {
               ref.read(filterProvider.notifier).state =
@@ -356,7 +356,7 @@ class FilterBar extends ConsumerWidget {
             },
           ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('清除'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -382,32 +382,32 @@ class FilterBar extends ConsumerWidget {
 
   void _showSortMenu(BuildContext context, WidgetRef ref) {
     final filter = ref.read(filterProvider);
-    showMenu<PopupMenuEntry>(
+    showMenu<void>(
       context: context,
       position: const RelativeRect.fromLTRB(500, 80, 0, 0),
       items: [
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('拍摄日期'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(sortBy: 'dateTaken');
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('导入日期'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(sortBy: 'importedAt');
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('星级'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(sortBy: 'rating');
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Text('文件名'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
@@ -415,14 +415,14 @@ class FilterBar extends ConsumerWidget {
           },
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: Text(filter.ascending ? '✓ 升序' : '升序'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
                 filter.copyWith(ascending: true);
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: Text(!filter.ascending ? '✓ 降序' : '降序'),
           onTap: () {
             ref.read(filterProvider.notifier).state =
