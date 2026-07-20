@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * ort_bridge.h — Minimal ONNX Runtime bridge for dart:ffi
  *
