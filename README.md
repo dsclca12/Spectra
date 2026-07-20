@@ -1,5 +1,17 @@
 # Spectra
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
+  </picture>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.29+-blue?style=flat-square&logo=flutter">
+  <img alt="License" src="https://img.shields.io/github/license/dsclca12/Spectra?style=flat-square">
+  <img alt="Stars" src="https://img.shields.io/github/stars/dsclca12/Spectra?style=flat-square">
+  <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
+</p>
+
 **面向专业摄影师的 Windows 桌面端照片分类与资产管理（DAM）应用**
 
 > 分类优先，编辑交给专业工具。
@@ -67,17 +79,30 @@ RAW 和 HEIC 格式需要安装 Windows codec pack 才能生成缩略图和预�
 
 ## 快速开始
 
-### 环境要求
+### 📥 下载安装
+
+从 [GitHub Releases](https://github.com/dsclca12/Spectra/releases) 下载最新版本：
+
+```powershell
+# 下载 spectra-*.windows-x64.zip 解压后直接运行 spectra.exe
+# 无需安装，即解即用
+```
+
+> 如需 RAW/HEIC 支持，请从 Microsoft Store 安装 **Raw Image Extension** 和 **HEIF 图像扩展**。
+
+### 🔧 从源码构建
+
+#### 环境要求
 
 - **Flutter**: 3.29+（Windows Stable 通道）
 - **Windows**: Windows 10 20H2 或更高版本 / Windows 11
 - **工具**: Visual Studio 2022（含"C++ 桌面开发"工作负载）
 
-### 安装与运行
+#### 构建步骤
 
 ```powershell
 # 克隆项目
-git clone https://github.com/spectra-dam/spectra.git
+git clone https://github.com/dsclca12/Spectra.git
 cd spectra
 
 # 获取依赖
@@ -86,8 +111,8 @@ flutter pub get
 # 运行
 flutter run -d windows
 
-# 构建安装包
-flutter build windows --msix
+# 构建发布包
+flutter build windows --release
 ```
 
 ### 开发环境配置
