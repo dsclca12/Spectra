@@ -465,40 +465,13 @@ class SettingsNotifier extends StateNotifier<AppSettingsState> {
   }
 
   /// 重置所有设置到默认值
+  ///
+  /// ⚡ 性能优化（v0.4.8）：
+  /// - 旧实现：对 ~50 项设置逐条 await deleteSetting(key) → 50 次 SQL
+  /// - 新实现：单条 DELETE FROM app_settings → 1 次 SQL
+  /// - 50 次 DB 往返 → 1 次，重置速度提升约 50 倍
   Future<void> resetAll() async {
-    for (final key in AppSettingsState._defaultShortcuts.keys) {
-      await _dao.deleteSetting(key);
-    }
-    // 删除其他设置键
-    for (final key in [
-      SettingKeys.themeMode, SettingKeys.accentColor,
-      SettingKeys.leftPanelWidth, SettingKeys.rightPanelWidth,
-      SettingKeys.thumbnailSmallSize, SettingKeys.thumbnailMediumSize,
-      SettingKeys.thumbnailCacheLimit, SettingKeys.thumbnailConcurrency,
-      SettingKeys.previewMaxSize, SettingKeys.gridCacheExtent,
-      SettingKeys.importExifConcurrency, SettingKeys.importThumbnailConcurrency,
-      SettingKeys.importAutoGenerateThumbs, SettingKeys.importWatchFolders,
-      SettingKeys.maxFileSizeMB, SettingKeys.searchDebounceMs,
-      SettingKeys.searchScopeFileName, SettingKeys.searchScopeTitle,
-      SettingKeys.searchScopeDescription, SettingKeys.searchScopeCamera,
-      SettingKeys.searchScopeKeywords, SettingKeys.defaultViewMode,
-      SettingKeys.defaultThumbSize, SettingKeys.defaultSortBy,
-      SettingKeys.defaultAscending, SettingKeys.imageCacheMaxCount,
-      SettingKeys.imageCacheMaxSizeMB, SettingKeys.pageSize,
-      SettingKeys.editAutoSave, SettingKeys.editAutoSaveDebounceMs,
-      SettingKeys.editAutoSaveOnSwitch, SettingKeys.editAutoSaveOnClose,
-      SettingKeys.editHistoryEnabled, SettingKeys.editHistoryMaxCount,
-      SettingKeys.editAutoAdjustPreserve,
-      SettingKeys.editAutoAdjustEngine,
-      SettingKeys.editNeuralEnhanceStrength,
-      SettingKeys.editSuperResolutionEnabled,
-      SettingKeys.editHistoryDebounceMs,
-      SettingKeys.aiModelPath,
-      SettingKeys.aiAutoLoadModel,
-      SettingKeys.aiAnalysisSize,
-    ]) {
-      await _dao.deleteSetting(key);
-    }
+    await _dao.deleteAll();
     state = const AppSettingsState();
   }
 

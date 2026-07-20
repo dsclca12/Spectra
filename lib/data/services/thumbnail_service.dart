@@ -40,12 +40,22 @@ class ThumbnailService {
   final Semaphore _generateSemaphore = Semaphore(4);
 
   /// 写入路径缓存并执行 LRU 淘汰
+  ///
+  /// ⚡ 淘汰策略优化（v0.4.8）：
+  /// - 旧策略：超过上限时只删除 1 条最旧记录。当缓存大小恰好卡在上限边界时，
+  ///   每次 _setCache 都会触发淘汰 → 反复删除/插入，沦为「伪 LRU」。
+  /// - 新策略：超过上限时批量删除 10% 的最旧条目（至少 1 条），
+  ///   给新条目留出足够空间，减少淘汰频率。
+  /// - Dart Map 保持插入顺序，keys.first 即最旧条目。
   void _setCache(String key, String? value) {
     _pathCache[key] = value;
-    // LRU 淘汰 — 超过上限时删除最早插入的条目
-    // Dart Map 保持插入顺序，remove 最旧的 key 即可
     if (_pathCache.length > _maxPathCacheSize) {
-      _pathCache.remove(_pathCache.keys.first);
+      // 批量淘汰 — 一次移除 10% 的最旧条目，减少边界抖动
+      final toRemove = (_pathCache.length - (_maxPathCacheSize * 0.9).round())
+          .clamp(1, _pathCache.length);
+      for (var i = 0; i < toRemove; i++) {
+        _pathCache.remove(_pathCache.keys.first);
+      }
     }
   }
 

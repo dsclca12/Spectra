@@ -35,6 +35,14 @@ class SettingsDao extends DatabaseAccessor<AppDatabase> with _$SettingsDaoMixin 
   Future<int> deleteSetting(String key) =>
       (this.delete(appSettings)..where((s) => s.key.equals(key))).go();
 
+  /// 删除所有设置 — 单条 SQL，替代逐条 deleteSetting
+  ///
+  /// ⚡ 性能优化（v0.4.8）：
+  /// - 旧代码：resetAll() 对每项设置逐条 await deleteSetting → 40+ 次 SQL
+  /// - 新实现：单条 DELETE FROM app_settings → 1 次 SQL
+  /// - 在重置快捷键（~20 项）+ 其他设置（~30 项）时，从 ~50 次 DB 往返降到 1 次
+  Future<int> deleteAll() => delete(appSettings).go();
+
   /// 获取所有设置
   Future<Map<String, String>> getAll() async {
     final result = await select(appSettings).get();
