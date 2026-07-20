@@ -8,6 +8,13 @@ import '../../core/constants.dart';
 import '../../core/errors.dart';
 
 /// 文件系统服务 — 负责文件遍历、监听和增量扫描
+///
+/// ⚡ 性能策略：
+/// - 单次遍历不预统计：避免整个文件夹遍历两遍（见 scanDirectory）
+/// - 异步目录遍历：使用 dir.list() 替代 listSync()，避免阻塞事件循环
+/// - 手动递归替代 recursive=true：单目录 FileSystemException 不影响其他目录
+/// - stat 结果随事件传递（_FileEntry），避免调用方二次 stat
+/// - 跳过已知 Windows 系统目录（回收站/系统卷信息等），避免权限异常
 class FileSystemService {
   FileSystemService();
 
@@ -20,6 +27,8 @@ class FileSystemService {
   /// - 手动递归遍历替代 dir.list(recursive: true)：Windows 上 Dart 的
   ///   递归遍历遇到无权限目录（System Volume Information 等）会抛出
   ///   FileSystemException 并终止整个流。手动递归单目录失败不影响其他。
+  /// - 异步 dir.list() 替代同步 dir.listSync()：大型目录树扫描时避免
+  ///   阻塞事件循环数百毫秒，UI 保持响应。
   ///
   /// [onProgress] 回调用于报告扫描进度（total 在扫描完成后才确定）
   Stream<ScanEvent> scanDirectory(
@@ -71,54 +80,64 @@ class FileSystemService {
   }
 
   /// 递归遍历目录树 — 逐目录处理，单目录失败不中断整体扫描
+  /// 递归遍历目录树 — 逐目录异步遍历，单目录失败不中断整体扫描。
+  ///
+  /// ⚡ 性能说明：
+  /// - 使用异步 `dir.list()` 替代同步 `dir.listSync()`，避免阻塞事件循环。
+  /// - 带数万子目录的大型摄影库（如按年月日分层）扫描时，同步 listSync 会
+  ///   数百毫秒阻塞 UI 线程。异步 list 让 UI 渲染和其他事件得以正常处理。
+  /// - 每次 yield 后事件循环有机会处理其他微任务，扫描大目录时 UI 保持响应。
   Stream<_FileEntry> _walkDirectory(Directory dir) async* {
     // 先处理当前目录的文件
     yield* _listFilesInDirectory(dir);
 
-    // 再递归处理子目录
-    List<FileSystemEntity> subdirs;
+    // 再递归处理子目录 — 使用异步 list 以避免阻塞事件循环
+    // ⚡ 注意：dir.list() 是异步 Stream，每批返回一个 entity。
+    // 相比 listSync() 的一次性返回所有 entity，异步版本在大目录下
+    // 内存占用更低（无需一次性加载所有子目录名到 List）。
     try {
-      subdirs = dir.listSync(followLinks: false);
+      await for (final entity in dir.list(followLinks: false)) {
+        if (entity is! Directory) continue;
+
+        // entity 经过 is! 检查后已收窄为 Directory 类型
+        // ⚡ 注意：异步 list() 返回的 entity 类型与同步 listSync() 一致，
+        // 都是 FileSystemEntity，但通过 await for 逐条消费而非一次性加载。
+        if (_shouldSkipDirectory(entity)) continue;
+
+        yield* _walkDirectory(entity);
+      }
     } on FileSystemException {
       // 无法列出目录内容（权限不足等），跳过该目录，继续扫描其他目录
-      return;
-    }
-
-    for (final entity in subdirs) {
-      if (entity is! Directory) continue;
-
-      // 跳过应忽略的目录
-      if (_shouldSkipDirectory(entity)) continue;
-
-      yield* _walkDirectory(entity);
     }
   }
 
   /// 列出单个目录中的图片文件
+  ///
+  /// ⚡ 性能说明：
+  /// - 使用异步 `dir.list()` 替代同步 `dir.listSync()`，避免阻塞事件循环。
+  /// - `entity.stat()` 虽是异步调用但文件元数据读取通常很快（~1ms）。
+  /// - 对于包含数千文件的单个目录，同步 listSync 可能阻塞数毫秒到数十毫秒。
+  ///   虽然单次不大，但累积在深度递归中可能显著影响启动扫描延迟。
   Stream<_FileEntry> _listFilesInDirectory(Directory dir) async* {
-    List<FileSystemEntity> entities;
     try {
-      entities = dir.listSync(followLinks: false);
+      await for (final entity in dir.list(followLinks: false)) {
+        if (entity is! File) continue;
+
+        final ext = p.extension(entity.path).toLowerCase().replaceAll('.', '');
+        if (!AppConstants.supportedImageExtensions.contains(ext)) continue;
+
+        // 忽略过大的文件
+        try {
+          final stat = await entity.stat();
+          if (stat.size > AppConstants.maxFileSizeBytes) continue;
+          yield _FileEntry(entity, stat);
+        } on FileSystemException {
+          // 单个文件 stat 失败（权限/锁定等），跳过该文件
+          continue;
+        }
+      }
     } on FileSystemException {
       // 目录不可读，跳过
-      return;
-    }
-
-    for (final entity in entities) {
-      if (entity is! File) continue;
-
-      final ext = p.extension(entity.path).toLowerCase().replaceAll('.', '');
-      if (!AppConstants.supportedImageExtensions.contains(ext)) continue;
-
-      // 忽略过大的文件
-      try {
-        final stat = await entity.stat();
-        if (stat.size > AppConstants.maxFileSizeBytes) continue;
-        yield _FileEntry(entity, stat);
-      } on FileSystemException {
-        // 单个文件 stat 失败（权限/锁定等），跳过该文件
-        continue;
-      }
     }
   }
 

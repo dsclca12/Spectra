@@ -1,7 +1,7 @@
 {
-  "version": "0.4.5",
+  "version": "0.4.6",
   "build": "20260720",
-  "buildCommit": "export-filename-collision-optimization",
+  "buildCommit": "async-directory-walk",
   "channel": "stable",
   "name": "Spectra",
   "description": "专业摄影师的 Windows 桌面端照片分类与资产管理应用"

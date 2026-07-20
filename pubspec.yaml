@@ -88,6 +88,6 @@ msix_config:
   display_name: Spectra
   publisher_display_name: Spectra Project
   identity_name: com.spectra.app
-  msix_version: 0.4.5.0
+  msix_version: 0.4.6.0
   logo_path: assets/icons/app_icon.png
   capabilities: broadFileSystemAccess

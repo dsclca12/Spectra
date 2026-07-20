@@ -6,7 +6,7 @@
 #define MyAppURL "https://github.com/dsclca12/Spectra"
 #define MyAppExeName "spectra.exe"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.4.5"
+  #define MyAppVersion "0.4.6"
 #endif
 
 [Setup]
