@@ -2,14 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers.dart';
 
-/// 缩略图路径 Provider — 按照片 ID 获取缩略图
+/// 缩略图路径 Provider — 按 (photoId + 尺寸) 获取缩略图文件路径
 ///
-/// 使用 autoDispose — 滚动出屏幕的缩略图 provider 被自动销毁。
-/// ThumbnailService 内部的 _pathCache 会缓存已生成的路径，
-/// 滚动回来时 provider 重新创建但 generate() 会命中缓存立即返回。
+/// ⚡ 性能设计：
+/// - 使用 autoDispose.family — 滚动出屏幕的 provider 自动销毁，
+///   避免网格滚动几轮后累积上千个 provider 造成内存泄漏。
+/// - ThumbnailService._pathCache（LRU 500 条）缓存已生成的路径，
+///   滚动回来时 provider 重建但 generate() 命中缓存立即返回。
+/// - ThumbnailService 内部使用 Semaphore(4) 限制并发解码，
+///   避免 200 项网格同时触发 200 个 WIC/PowerShell 进程。
 ///
-/// 不使用 autoDispose 会导致所有曾经可见的缩略图 provider 永远存活，
-/// 200 项网格滚动几轮后累积上千个 provider，内存持续增长。
+/// 参见：ThumbnailService.generate() 的完整缓存策略说明。
 final thumbnailPathProvider =
     FutureProvider.autoDispose.family<String?, ThumbnailRequest>((ref, request) async {
   final thumbnailService = ref.read(thumbnailServiceProvider);

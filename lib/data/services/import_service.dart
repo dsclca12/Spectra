@@ -16,11 +16,16 @@ import 'thumbnail_service.dart';
 
 /// 导入服务 — 编排文件夹扫描、EXIF 读取、缩略图生成
 ///
-/// 性能策略：
-/// - 批量查重：一次性查询已存在的路径集合，避免逐条 SELECT
-/// - 批量插入：使用 drift batch 减少事务往返
-/// - 后台任务限流：EXIF/缩略图通过信号量限制并发，避免内存爆炸
-/// - 导入完成不等缩略图：缩略图由 UI 滚动时按需生成，导入只负责入库
+/// ⚡ 性能策略：
+/// - 批量查重：一次性查询已存在的路径集合（getExistingPaths），避免逐条 SELECT
+/// - 批量插入：使用 drift batch insertAll 替代逐条 insertReturning，单事务完成
+/// - 后台任务限流：EXIF 通过 Semaphore(2) 限制并发，避免内存爆炸
+/// - 导入不等 EXIF：EXIF 改为 fire-and-forget（_enqueueExifByPath），
+///   导入立即返回，UI 可以马上浏览。EXIF 在后台慢慢写入。
+/// - 导入不等缩略图：缩略图由 UI 滚动时按需生成，ThumbnailService 内部
+///   有 _pathCache 和 LRU 策略，滚动回来命中缓存。
+/// - 进度节流：ImportNotifier 用 Timer.periodic(200ms) 节流进度通知，
+///   避免逐文件 notifyListeners 导致 UI 狂刷。
 class ImportService {
   final PhotoDao _photoDao;
   final FolderDao _folderDao;

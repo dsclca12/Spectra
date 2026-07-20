@@ -19,17 +19,19 @@ final currentFolderProvider = StateProvider<int?>((ref) => null);
 
 /// 当前分页偏移量（每页 200 条）
 /// 用户滚动到底部时由 UI 递增此值，catalogProvider 自动触发重新查询
+/// offset 变化会丢弃之前加载的数据 — 但对于 <= 2000 张照片足够高效
 final catalogPageOffsetProvider = StateProvider<int>((ref) => 0);
 
 /// 照片列表 Provider — 响应筛选条件变化，支持滚动分页
 ///
-/// 性能说明：
-/// - 首屏只加载 200 条（pageSize=200），用户滚动到底部时递增 offset
-/// - 分页通过 catalogPageOffsetProvider 控制，UI 监听 ScrollController
-///   在接近底部时自动递增 offset，触发 catalogProvider 重新查询
-/// - 注意：每次 offset 变化会丢弃之前加载的数据重新查询（FutureProvider 特性）。
-///   若需累积追加数据，应改用 StateNotifierProvider + 手动 append 模式。
-///   当前实现对 <= 2000 张照片的目录足够高效。
+/// ⚡ 性能说明：
+/// - 首屏加载 200 条（pageSize=200），用户滚动到底部时递增 offset。
+/// - 使用 autoDispose 防止 FutureProvider 持久占用内存。
+/// - watch exifRefreshTickProvider — 后台 EXIF 写入后自动刷新列表。
+/// - 对于 >= 10000 张照片的大目录，建议迁移到 StateNotifierProvider +
+///   增量 append 模式，避免每次 offset 变化重新查询。
+///
+/// 筛选条件通过 [filterProvider] 和 [currentFolderProvider] 控制。
 final catalogProvider =
     FutureProvider.autoDispose<List<Photo>>((ref) async {
   final filter = ref.watch(filterProvider);

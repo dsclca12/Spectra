@@ -24,9 +24,11 @@ void main() async {
   // accessibility settings if needed.
   SystemChannels.accessibility.send({'enabled': false});
 
-  // ── Flutter image cache tuning ──
-  // Default 1000 images / 100MB is too small for a photo management app.
-  // 2000 thumbnails + previews, 500MB cap.
+    // ── Flutter 图片缓存调优 ──
+  // 默认 1000 张 / 100MB 对照片管理应用太小。
+  // 网格 200 项 + 预览图轻松超限。设为 2000 张 / 500MB。
+  // 注意：PaintingBinding 初始化后才能设置 cache 参数。
+  // 此设置对所有 Image.file / Image.network / precacheImage 等生效。
   PaintingBinding.instance.imageCache.maximumSize = 2000;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 500 * 1024 * 1024;
 

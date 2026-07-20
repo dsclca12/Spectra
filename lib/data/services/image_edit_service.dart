@@ -10,6 +10,13 @@ import '../models/edit_params.dart';
 /// 实时预览使用 Flutter fragment shader（GPU 加速），
 /// 最终导出时使用 `package:image` 进行像素级处理。
 ///
+/// ⚠️ 已知限制：
+/// - `package:image` 是纯 Dart 解码器，不支持 RAW/HEIC/AVIF 格式。
+///   对于这些格式的导出，需要先通过 ImageDecoderService 解码为 PNG
+///   中间格式再应用编辑参数。当前版本在 RAW 导出时会返回 null。
+/// - 全分辨率解码（readAsBytes + decodeImage）对 50MB+ 大图可能 OOM。
+///   中长期方案：用 GPU shader 直接烘焙，跳过 CPU 像素处理。
+///
 /// 支持的编辑操作：
 /// - 基础调整：曝光、对比度、高光、阴影、白色/黑色色阶
 /// - 色彩调整：饱和度、自然饱和度、色温、色调

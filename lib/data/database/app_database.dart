@@ -73,14 +73,11 @@ class AppDatabase extends _$AppDatabase {
       onCreate: (Migrator m) async {
         await m.createAll();
         // 创建索引
+        // ─── 单列索引 ───
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_folder_id ON photos(folder_id);');
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_thumbnail_status ON photos(thumbnail_status);');
-        await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);');
-        await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_tags_parent_id ON tags(parent_id);');
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_date_taken ON photos(date_taken);');
         await customStatement(
@@ -92,15 +89,38 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_color_label ON photos(color_label);');
         await customStatement(
-            'CREATE INDEX IF NOT EXISTS idx_photos_camera ON photos(camera_make, camera_model);');
-        await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_file_hash ON photos(file_hash);');
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_file_name ON photos(file_name);');
+
+        // ─── 文件夹相关索引 ───
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);');
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_tags_parent_id ON tags(parent_id);');
+
+        // ─── 复合索引 — 覆盖常见筛选组合 ───
+        // 筛选照片时的常见组合：(folder_id, rating, date_taken) — 文件夹内按评分+日期
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_folder_rating_date ON photos(folder_id, rating, date_taken);');
+        // (folder_id, pick_label) — 文件夹内按旗标筛选
         await customStatement(
             'CREATE INDEX IF NOT EXISTS idx_photos_folder_pick ON photos(folder_id, pick_label);');
+        // (folder_id, color_label) — 文件夹内按色标筛选
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_photos_folder_color ON photos(folder_id, color_label);');
+        // (folder_id, pick_label, rating) — 文件夹内按旗标+评分组合筛选
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_photos_folder_pick_rating ON photos(folder_id, pick_label, rating);');
+        // 相机型号+日期 — 相机筛选视图常用的排序方式
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_photos_camera_date ON photos(camera_make, camera_model, date_taken);');
+
+        // ─── 复合索引 — 加速排序 ───
+        // 原先仅 (camera_make, camera_model)，补充 (camera_make, camera_model, date_taken)
+        // 使按相机筛选并按日期排序的查询可以用索引覆盖
+        await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_photos_camera ON photos(camera_make, camera_model);');
 
         // 初始化默认设置
         await into(appSettings).insert(

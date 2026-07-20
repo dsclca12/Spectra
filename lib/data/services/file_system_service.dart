@@ -11,7 +11,15 @@ import '../../core/errors.dart';
 class FileSystemService {
   FileSystemService();
 
-  /// 递归扫描文件夹中的所有图片文件
+    /// 递归扫描文件夹中的所有图片文件
+  ///
+  /// ⚡ 性能说明：
+  /// - 单次遍历，不预统计 total — 预统计会导致整个文件夹被遍历两遍，
+  ///   对于包含数万文件的摄影文件夹耗时加倍。
+  /// - stat 结果随事件传递（_FileEntry），避免调用方二次 stat。
+  /// - 手动递归遍历替代 dir.list(recursive: true)：Windows 上 Dart 的
+  ///   递归遍历遇到无权限目录（System Volume Information 等）会抛出
+  ///   FileSystemException 并终止整个流。手动递归单目录失败不影响其他。
   ///
   /// [onProgress] 回调用于报告扫描进度（total 在扫描完成后才确定）
   Stream<ScanEvent> scanDirectory(
