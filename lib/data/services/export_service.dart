@@ -80,16 +80,19 @@ class ExportService {
 
   /// 预读目标目录中的所有文件名（不含路径），返回 Set 用于内存查重。
   ///
-  /// ⚡ 性能说明：
-  /// - `dir.listSync()` 是同步操作，但通常很快（纯目录元数据读取，不读文件内容）。
-  /// - 对于包含数万文件的目标目录，可能耗时数百毫秒。
-  /// - 但相比旧代码逐次 `File.exists()` 的 N × 毫秒级开销，预读一次是净优化。
+  /// ⚡ 性能优化（v0.4.7）：
+  /// - 旧实现：`dir.listSync()` 是同步 I/O，会阻塞事件循环数百毫秒（数万文件时）。
+  ///   在异步方法中使用同步 I/O 是本应避免的模式 — 虽然预读在导出开始前执行，
+  ///   但事件循环在此期间无法处理任何其他任务（UI 渲染、响应交互等）。
+  /// - 新实现：`await dir.list().toList()` 异步遍历，每次 yield 让事件循环有机会
+  ///   处理其他微任务。对于数万文件的目标目录，UI 不会再感知到卡顿。
+  /// - 相比旧版逐次 `File.exists()` 的 N × 毫秒级串行开销，预读一次仍是净优化。
   Future<Set<String>> _preloadTargetFileNames(String dirPath) async {
     final dir = Directory(dirPath);
     if (!await dir.exists()) return {};
 
     try {
-      final entities = dir.listSync(followLinks: false);
+      final entities = await dir.list(followLinks: false).toList();
       return entities
           .whereType<File>()
           .map((f) => p.basename(f.path))
@@ -135,8 +138,15 @@ class ExportService {
           final ext = p.extension(fileName);
           var counter = 1;
           var candidate = '$nameNoExt ($counter)$ext';
+          // 上限保护：极端情况下（同名文件 > 9999 个），用时间戳保底
+          // 避免 while 循环无限递增导致死循环
           while (existingFiles.contains(candidate)) {
             counter++;
+            if (counter > 9999) {
+              candidate =
+                  '${nameNoExt}_${DateTime.now().millisecondsSinceEpoch}$ext';
+              break;
+            }
             candidate = '$nameNoExt ($counter)$ext';
           }
           destPath = p.join(targetDir, candidate);

@@ -74,18 +74,15 @@ class Semaphore {
 }
 
 /// 等待队列中的请求项 — 关联 Completer 和 超时 Timer。
+///
+/// ⚡ 注意：_release() 方法已在 v0.4.7 中移除。
+/// `Semaphore._release()` 负责所有信号量释放逻辑，作为回调通过
+/// `completer.complete(_release)` 传递给等待队列中的请求。
+/// 旧版 `_QueuedRequest._release()` 引用了外部类的 `_waitQueue` 和 `_current`，
+/// 属于不可达的死代码（编译错误风险），已安全删除。
 class _QueuedRequest {
   final Completer<void Function()> completer;
   Timer? timer;
 
   _QueuedRequest(this.completer);
-
-  void _release() {
-    if (_waitQueue.isNotEmpty) {
-      final next = _waitQueue.removeAt(0);
-      next.complete(_release);
-    } else {
-      _current--;
-    }
-  }
 }
