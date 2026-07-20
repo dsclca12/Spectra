@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "title": "Spectra Development Codespace",
+    "image": "mcr.microsoft.com/devcontainers/universal:linux",
+    "features": {
+      "ghcr.io/devcontainers/features/flutter:1": {}
+    },
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "dart-code.flutter",
+          "dart-code.dart-code",
+          "nash.awesome-flutter-snippets",
+          "blaxjun.flutter-riverpod-snippets"
+        ]
+      }
+    },
+    "postCreateCommand": "flutter pub get"
+  }
+}
