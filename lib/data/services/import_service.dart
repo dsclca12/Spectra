@@ -139,8 +139,9 @@ class ImportService {
       _enqueueExifByPath(c.path);
     }
 
-    // 更新文件夹照片计数
-    await _folderDao.updatePhotoCount(folderId, imported);
+    // 更新文件夹照片计数 — 从数据库查询实际数量，而非本次新增数
+    final totalCount = await _photoDao.countByFolder(folderId);
+    await _folderDao.updatePhotoCount(folderId, totalCount);
 
     // 不等待 EXIF — 导入立即完成，用户可以马上浏览
     // EXIF 在后台慢慢写入，UI 刷新时自然拿到最新数据

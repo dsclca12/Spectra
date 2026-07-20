@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'core/logging.dart';
 import 'data/database/app_database.dart';
 import 'data/services/pointer_type_service.dart';
 import 'providers/providers.dart';
@@ -57,6 +58,15 @@ void main() async {
 
   // Initialize database in parallel (created in isolate, doesn't block UI thread)
   final database = await createAppDatabase();
+
+  // 启动时修复所有文件夹的照片计数 — 纠正旧代码中的错误计数
+  AppLogger.info('Startup', '修复文件夹照片计数...');
+  try {
+    await database.folderDao.repairAllPhotoCounts();
+    AppLogger.info('Startup', '文件夹照片计数修复完成');
+  } catch (e) {
+    AppLogger.warn('Startup', '文件夹照片计数修复失败', details: e.toString());
+  }
 
   // ── Safe window close handling ──
   // Intercept close signal to close the database before Dart VM shutdown,

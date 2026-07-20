@@ -105,7 +105,10 @@ final thumbnailServiceProvider = Provider<ThumbnailService>((ref) {
 });
 
 final catalogServiceProvider = Provider<CatalogService>((ref) {
-  return CatalogService(photoDao: ref.read(photoDaoProvider));
+  return CatalogService(
+    photoDao: ref.read(photoDaoProvider),
+    folderDao: ref.read(folderDaoProvider),
+  );
 });
 
 final imageEditServiceProvider = Provider<ImageEditService>((ref) {

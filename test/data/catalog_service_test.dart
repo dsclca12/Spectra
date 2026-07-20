@@ -3,18 +3,26 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:spectra/data/database/app_database.dart';
 import 'package:spectra/data/database/daos/photo_dao.dart';
+import 'package:spectra/data/database/daos/folder_dao.dart';
 import 'package:spectra/data/models/photo_filter.dart';
 import 'package:spectra/data/services/catalog_service.dart';
 
 class _MockPhotoDao extends Mock implements PhotoDao {}
 
+class _MockFolderDao extends Mock implements FolderDao {}
+
 void main() {
   late _MockPhotoDao mockPhotoDao;
+  late _MockFolderDao mockFolderDao;
   late CatalogService catalogService;
 
   setUp(() {
     mockPhotoDao = _MockPhotoDao();
-    catalogService = CatalogService(photoDao: mockPhotoDao);
+    mockFolderDao = _MockFolderDao();
+    catalogService = CatalogService(
+      photoDao: mockPhotoDao,
+      folderDao: mockFolderDao,
+    );
   });
 
   group('CatalogService', () {

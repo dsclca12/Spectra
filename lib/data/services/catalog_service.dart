@@ -1,12 +1,16 @@
 import '../database/daos/photo_dao.dart';
+import '../database/daos/folder_dao.dart';
 import '../database/app_database.dart';
 import '../../data/models/photo_filter.dart';
 
 /// Catalog service — photo query/sort/group logic.
 class CatalogService {
   final PhotoDao _photoDao;
+  final FolderDao _folderDao;
 
-  CatalogService({required PhotoDao photoDao}) : _photoDao = photoDao;
+  CatalogService({required PhotoDao photoDao, required FolderDao folderDao})
+      : _photoDao = photoDao,
+        _folderDao = folderDao;
 
   /// Query photo list.
   Future<List<Photo>> queryPhotos({
@@ -83,12 +87,32 @@ class CatalogService {
 
   /// Delete photo (remove from catalog, does not delete file).
   Future<void> removePhoto(int photoId) async {
+    final photo = await _photoDao.getById(photoId);
+    if (photo == null) return;
     await _photoDao.deletePhoto(photoId);
+    // 更新文件夹照片计数
+    if (photo.folderId != null) {
+      final count = await _photoDao.countByFolder(photo.folderId!);
+      await _folderDao.updatePhotoCount(photo.folderId!, count);
+    }
   }
 
   /// Batch delete photos (single transaction, avoids N DB round-trips).
   Future<void> removePhotos(List<int> photoIds) async {
+    if (photoIds.isEmpty) return;
+    // 先查询要删除的照片以获取所属文件夹
+    final photos = await _photoDao.getByIds(photoIds);
+    final folderIds = photos
+        .map((p) => p.folderId)
+        .where((id) => id != null)
+        .cast<int>()
+        .toSet();
     await _photoDao.deletePhotos(photoIds);
+    // 更新受影响的文件夹照片计数
+    for (final folderId in folderIds) {
+      final count = await _photoDao.countByFolder(folderId);
+      await _folderDao.updatePhotoCount(folderId, count);
+    }
   }
 
   /// Batch get photos by ID list.

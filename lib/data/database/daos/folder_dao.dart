@@ -66,4 +66,21 @@ class FolderDao extends DatabaseAccessor<AppDatabase> with _$FolderDaoMixin {
       (update(folders)..where((f) => f.id.equals(folderId))).write(
         FoldersCompanion(isWatched: Value(watched ? 1 : 0)),
       );
+
+  /// 修复所有文件夹的照片计数（启动时调用）
+  /// 扫描数据库中 photos 表，按 folder_id 分组统计实际数量并回写
+  Future<void> repairAllPhotoCounts() async {
+    final allFolders = await getAll();
+    for (final folder in allFolders) {
+      // 用 SQL COUNT 查询该文件夹的实际照片数
+      final result = await (selectOnly(photos)
+            ..addColumns([photos.id.count()])
+            ..where(photos.folderId.equals(folder.id)))
+          .get();
+      final actualCount = result.first.read(photos.id.count()) ?? 0;
+      if (folder.photoCount != actualCount) {
+        await updatePhotoCount(folder.id, actualCount);
+      }
+    }
+  }
 }
