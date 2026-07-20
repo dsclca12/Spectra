@@ -7,6 +7,145 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.10] — 2026-07-20
+
+### Added
+
+- **English README**: New `README.en.md` with full English translation of the project documentation.
+- **Language Switcher**: README now has 🇨🇳/🇬🇧 toggle at the top for bilingual navigation.
+- **CI Format Check**: `dart format --set-exit-if-changed` added to CI pipeline to enforce code style.
+
+### Changed
+
+- **CHANGELOG.md**: Backfilled all v0.4.0–v0.4.9 release notes (previously only contained v0.3.0 and earlier).
+- **CITATION.cff**: Version updated to 0.4.10.
+- **SECURITY.md**: Supported versions table updated (0.4.x active, 0.3.x maintenance, <0.3 EOL).
+- **FUNDING.yml**: Cleaned up template placeholders.
+- **.gitattributes**: Added `*.iss` (Inno Setup) to LF text handling.
+
+### Documentation
+
+- Added GitHub badges for `last-commit` and `issues` to both Chinese and English READMEs.
+- Added CHANGELOG.md link to documentation index in both README versions.
+- Updated README Phase 2/3 descriptions with clearer status indicators.
+
+---
+
+## [0.4.9] — 2026-07-20
+
+### Performance
+
+- **NativePreprocessService**: Async lazy DLL loading — constructor no longer blocks on `file.existsSync()`. Falls back to pure Dart automatically. Uses `Platform.resolvedExecutable` instead of `Directory.current` for more reliable path resolution.
+- **PhotoGrid Context Menu**: Added comprehensive Chinese performance comments documenting the `ref.invalidate` batch operation design decisions.
+
+---
+
+## [0.4.8] — 2026-07-20
+
+### Performance
+
+- **ThumbnailService LRU**: Batch eviction (10% of oldest entries) instead of single-entry removal, reducing boundary thrashing.
+- **SettingsProvider resetAll**: Single `DELETE FROM app_settings` instead of ~50 individual `deleteSetting()` calls — ~50× faster reset.
+- **ImageEditService**: Replaced custom `_pow` (recursive, stack overflow risk), `_sqrt` (Newton iteration ×20), and `_rgbSaturation` (per-pixel `List` allocation) with `dart:math` equivalents and inline comparisons. Zero-allocation saturation, CPU-instruction-level sqrt, C-level pow.
+
+---
+
+## [0.4.7] — 2026-07-20
+
+### Fixed
+
+- **Concurrency**: Removed unreachable `_QueuedRequest._release()` dead code that referenced out-of-scope variables — potential compile error.
+- **ExportService**: Filename conflict counter now has a 9999 upper bound with timestamp fallback, preventing infinite loops in extreme edge cases.
+
+### Performance
+
+- **TagService batchAddTag/batchRemoveTag**: Replaced N individual `await` calls with drift batch API and single `DELETE WHERE photo_id IN (...)`. 100 photos: ~500ms → ~10ms.
+- **ExportService**: `dir.listSync()` → `await dir.list()` for async directory traversal, no longer blocking the event loop.
+
+---
+
+## [0.4.6] — 2026-07-20
+
+### Performance
+
+- **FileSystemService**: `dir.listSync()` → `dir.list()` async traversal. Large directory scans no longer block the event loop for hundreds of milliseconds.
+- **ExportService**: Pre-read target directory filenames into `Set<String>` for O(1) conflict detection instead of N disk I/O operations.
+
+### Documentation
+
+- Comprehensive Chinese performance annotations added to `FileSystemService`, `_walkDirectory`, `_listFilesInDirectory`, and `ExportService`.
+
+---
+
+## [0.4.5] — 2026-07-20
+
+### Documentation
+
+- Chinese performance annotations for `ExportService`, `ImageDecoderService`, `EditProvider`, `SettingsProvider`, `PhotoGrid`, and `main.dart`.
+
+---
+
+## [0.4.4] — 2026-07-20
+
+### Documentation
+
+- Version sync and continued Chinese annotation coverage across service and provider layers.
+
+---
+
+## [0.4.3] — 2026-07-20
+
+### Documentation
+
+- Full Chinese annotation pass for core modules: `ExportService`, `ImageDecoderService`, `EditProvider`, `SettingsProvider`, `PhotoGrid`, `main.dart`.
+
+---
+
+## [0.4.2] — 2026-07-20
+
+### Performance
+
+- **TagDao.mergeTags**: `batch.insertAll` replaces per-row `insert`, reducing N photo tag migrations from N INSERTs to 1 batch write.
+- **countFiltered**: Extended to support date, camera, and search scope parameters — `catalogService.countPhotos` now passes all filter conditions.
+
+### Documentation
+
+- Chinese annotations added to `MetadataService`, `PhotoDao`, `SelectionProvider`, `ViewModeProvider`.
+
+---
+
+## [0.4.1] — 2026-07-20
+
+### Performance
+
+- **FolderDao.repairAllPhotoCounts**: Single `GROUP BY` query replaces N individual `COUNT` queries — folder count repair drops from O(N) to O(1) DB round-trips.
+- **Composite Indexes**: Added covering indexes for common filter combinations (folder+color, folder+pick+rating, camera+date).
+
+### Fixed
+
+- **Semaphore**: Added timeout mechanism to prevent deadlock on hung tasks.
+
+### Documentation
+
+- Chinese annotations added to core files (`main.dart`, providers, services).
+
+---
+
+## [0.4.0] — 2026-07-20
+
+### Performance
+
+- **ExportService**: Introduced `Semaphore(4)` parallel copy — replaces serial `await` per file, dramatically improving export throughput.
+- **GridPanel**: `.select()` on `viewMode` prevents full middle-column rebuild on panel visibility changes.
+- **FilterBar**: `.select()` on `viewMode` prevents unnecessary rebuilds from unrelated state changes.
+- **Version sync**: `pubspec.yaml`, `constants.dart`, `strings.dart` unified to 0.4.0.
+
+### Documentation
+
+- Detailed Chinese performance annotations explaining the intent behind each optimization.
+
+---
+
 ## [0.3.0] — 2026-07-20
 
 ### Added

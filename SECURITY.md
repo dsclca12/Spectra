@@ -46,8 +46,9 @@ We prefer all communications in English or Chinese.
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | ✅ Active development |
-| < 0.1   | ❌ Not released |
+| 0.4.x   | ✅ Active development |
+| 0.3.x   | ⚠️ Maintenance |
+| < 0.3   | ❌ End of life |
 
 ## Disclosure Timeline
 

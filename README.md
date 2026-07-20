@@ -1,6 +1,11 @@
 # Spectra
 
 <p align="center">
+  <a href="README.md"><strong>🇨🇳 中文</strong></a> ·
+  <a href="README.en.md"><strong>🇬🇧 English</strong></a>
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
@@ -10,6 +15,8 @@
   <img alt="License" src="https://img.shields.io/github/license/dsclca12/Spectra?style=flat-square">
   <img alt="Stars" src="https://img.shields.io/github/stars/dsclca12/Spectra?style=flat-square">
   <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
+  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/dsclca12/Spectra?style=flat-square">
+  <img alt="Issues" src="https://img.shields.io/github/issues/dsclca12/Spectra?style=flat-square">
 </p>
 
 **面向专业摄影师的 Windows 桌面端照片分类与资产管理（DAM）应用**
@@ -224,6 +231,7 @@ spectra/
 | [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | 数据库 Schema 详细设计 |
 | [UX_GUIDE.md](docs/UX_GUIDE.md) | UX 设计指南与交互规范 |
 | [ROADMAP.md](docs/ROADMAP.md) | 详细路线图与里程碑 |
+| [CHANGELOG.md](CHANGELOG.md) | 版本发布历史 |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | 贡献指南 |
 
 ---

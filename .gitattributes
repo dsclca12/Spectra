@@ -28,6 +28,8 @@
 *.cmd text eol=crlf
 
 # ── Config files ──
+*.iss text eol=lf
+*.gradle text eol=lf
 *.cfg text eol=lf
 *.conf text eol=lf
 *.ini text eol=lf
