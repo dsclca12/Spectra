@@ -145,6 +145,15 @@ class ImageDecoderService {
   ///
   /// `instantiateImageCodec` 在 native 线程异步执行，不阻塞 UI。
   /// `targetWidth` 让解码器直接解码到目标尺寸，无需解码全分辨率。
+  ///
+  /// ⚠️ 内存说明：
+  /// - `readAsBytes()` 将整个文件加载到内存。对于大图（BMP/TIFF 可能 50MB+），
+  ///   这会导致峰值内存上升。但这是 `instantiateImageCodec` API 的要求 —
+  ///   Skia 解码器需要完整的数据缓冲区才能创建 codec。
+  /// - 缩略图场景（targetWidth=128/512）：解码器内部只解码部分数据，
+  ///   但调用方仍需读完整个文件。这是 dart:ui 的已知限制。
+  /// - 若出现内存问题，可考虑：1) 先用文件头判断尺寸后降采样读取；
+  ///   2) 改为 WIC 解码路径（WIC 支持流式解码）。
   Future<ui.Image?> _decodeWithDartUI(
     String filePath, {
     int? targetWidth,

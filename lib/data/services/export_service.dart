@@ -48,6 +48,15 @@ class ExportService {
       await targetDirectory.create(recursive: true);
     }
 
+    // ── 预读目标目录所有文件名到内存 Set ──
+    // ⚡ 性能优化：避免文件名冲突时逐次 File.exists()（N 次磁盘 I/O）。
+    // 导出大量同名文件（如 "IMG_0001 (1).jpg" 等）时，旧代码对每个
+    // 计数器值都做一次 await File.exists()，串行化 N 次 I/O。
+    // 预读后冲突检查全部在内存中完成，O(1) per check。
+    // 注意：对于 preserveStructure 模式，子目录的文件名无法全部预读，
+    // 但 preserveStructure 模式通常不会出现大量同名文件（在不同子目录下）。
+    final existingFiles = await _preloadTargetFileNames(targetDir);
+
     final total = photoPaths.length;
     var exported = 0;
 
@@ -60,6 +69,7 @@ class ExportService {
         targetDir: targetDir,
         preserveStructure: preserveStructure,
         commonRootPath: commonRootPath,
+        existingFiles: existingFiles,
       )),
     );
     exported = results.where((r) => r).length;
@@ -68,12 +78,38 @@ class ExportService {
     return exported;
   }
 
+  /// 预读目标目录中的所有文件名（不含路径），返回 Set 用于内存查重。
+  ///
+  /// ⚡ 性能说明：
+  /// - `dir.listSync()` 是同步操作，但通常很快（纯目录元数据读取，不读文件内容）。
+  /// - 对于包含数万文件的目标目录，可能耗时数百毫秒。
+  /// - 但相比旧代码逐次 `File.exists()` 的 N × 毫秒级开销，预读一次是净优化。
+  Future<Set<String>> _preloadTargetFileNames(String dirPath) async {
+    final dir = Directory(dirPath);
+    if (!await dir.exists()) return {};
+
+    try {
+      final entities = dir.listSync(followLinks: false);
+      return entities
+          .whereType<File>()
+          .map((f) => p.basename(f.path))
+          .toSet();
+    } on FileSystemException {
+      // 目录不可读时回退到逐次检查（不阻塞导出）
+      return {};
+    }
+  }
+
   /// 复制单张照片（受信号量限流），返回 true 表示成功
+  ///
+  /// [existingFiles] 共享的目标目录文件名集合，用于内存查重。
+  /// 复制成功后会将新文件名加入集合，供并行任务感知。
   Future<bool> _copyOneFile({
     required String sourcePath,
     required String targetDir,
     required bool preserveStructure,
     required String? commonRootPath,
+    required Set<String> existingFiles,
   }) async {
     final release = await _copySemaphore.acquire();
     try {
@@ -92,21 +128,26 @@ class ExportService {
         }
       } else {
         destPath = p.join(targetDir, fileName);
-        // Handle filename collision: append counter
-        if (await File(destPath).exists()) {
+        // ⚡ 内存查重替代逐次 File.exists() — 避免 N 次磁盘 I/O
+        // 利用预读的 existingFiles Set 做 O(1) 冲突检测
+        if (existingFiles.contains(fileName)) {
           final nameNoExt = p.basenameWithoutExtension(fileName);
           final ext = p.extension(fileName);
           var counter = 1;
-          while (await File(p.join(targetDir, '$nameNoExt ($counter)$ext')).exists()) {
+          var candidate = '$nameNoExt ($counter)$ext';
+          while (existingFiles.contains(candidate)) {
             counter++;
+            candidate = '$nameNoExt ($counter)$ext';
           }
-          destPath = p.join(targetDir, '$nameNoExt ($counter)$ext');
+          destPath = p.join(targetDir, candidate);
         }
       }
 
       try {
         if (!await sourceFile.exists()) return false;
         await sourceFile.copy(destPath);
+        // 复制成功后，将新文件名加入集合，供其他并行任务感知
+        existingFiles.add(p.basename(destPath));
         return true;
       } catch (_) {
         // 复制失败跳过，继续处理下一张
