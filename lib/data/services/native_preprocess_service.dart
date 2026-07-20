@@ -83,19 +83,30 @@ class NativePreprocessService {
 
   Future<void> _initAsync() async {
     try {
-      // 候选路径列表：
-      // 1. 可执行文件同级目录（发布时 DLL 应在此处）
-      // 2. 构建输出目录（开发阶段）
+      final libName = Platform.isWindows
+          ? 'nchw_preprocess.dll'
+          : 'libnchw_preprocess.so';
       final exeDir = p.dirname(Platform.resolvedExecutable);
       final candidates = [
-        p.join(exeDir, 'nchw_preprocess.dll'),
-        p.join(Directory.current.path, 'nchw_preprocess.dll'),
-        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner',
-            'Debug', 'nchw_preprocess.dll'),
-        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner',
-            'Release', 'nchw_preprocess.dll'),
-        p.join(Directory.current.path, 'native', 'preprocess', 'build',
-            'nchw_preprocess.dll'),
+        // 可执行文件同级目录 / lib 子目录
+        p.join(exeDir, libName),
+        if (!Platform.isWindows) p.join(exeDir, 'lib', libName),
+        // 当前目录
+        p.join(Directory.current.path, libName),
+        // Windows 构建输出
+        if (Platform.isWindows) ...[
+          p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner',
+              'Debug', libName),
+          p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner',
+              'Release', libName),
+        ],
+        // Linux 构建输出
+        if (!Platform.isWindows) ...[
+          p.join(Directory.current.path, 'build', 'linux', 'x64', 'runner',
+              'bundle', 'lib', libName),
+        ],
+        // 原生构建输出
+        p.join(Directory.current.path, 'native', 'preprocess', 'build', libName),
       ];
 
       for (final path in candidates) {

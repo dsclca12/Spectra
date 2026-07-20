@@ -2,10 +2,12 @@
 # 
 # Build:
 #   mkdir build && cd build
-#   cmake .. -G "Visual Studio 17 2022" -A x64
-#   cmake --build . --config Release
+#   cmake .. -DCMAKE_BUILD_TYPE=Release
+#   cmake --build .
 #
-# Output: build/Release/nchw_preprocess.dll
+# Output:
+#   Windows: build/Release/nchw_preprocess.dll
+#   Linux:   build/libnchw_preprocess.so
 cmake_minimum_required(VERSION 3.16)
 project(nchw_preprocess LANGUAGES C)
 
@@ -25,14 +27,26 @@ add_library(nchw_preprocess SHARED
 
 target_include_directories(nchw_preprocess PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Windows: export all symbols
+# Platform-specific properties
 if(MSVC)
     set_target_properties(nchw_preprocess PROPERTIES
         WINDOWS_EXPORT_ALL_SYMBOLS TRUE
     )
 endif()
 
-# Install to runner directory
-install(TARGETS nchw_preprocess
-    RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/../../build/windows/x64/runner/Release
+# Set output name consistently across platforms
+set_target_properties(nchw_preprocess PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
+
+# Install to Flutter runner directory
+if(WIN32)
+    install(TARGETS nchw_preprocess
+        RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/../../build/windows/x64/runner/Release
+    )
+elseif(UNIX AND NOT APPLE)
+    install(TARGETS nchw_preprocess
+        LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/../../build/linux/x64/runner/bundle/lib
+    )
+endif()

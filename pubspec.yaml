@@ -1,5 +1,5 @@
 name: spectra
-description: "面向专业摄影师的 Windows 桌面端照片分类与资产管理（DAM）应用"
+description: "面向专业摄影师的桌面端照片分类与资产管理（DAM）应用"
 publish_to: "none"
 version: 0.4.10
 
@@ -13,6 +13,7 @@ topics:
   - dam
   - photo-management
   - windows
+  - linux
   - flutter
 
 environment:
@@ -36,7 +37,7 @@ dependencies:
   # 文件与系统
   watcher: ^1.1.1
   desktop_drop: ^0.5.0
-  filepicker_windows: ^2.1.0
+  file_picker: ^8.0.0
   window_manager: ^0.4.3
 
   # EXIF

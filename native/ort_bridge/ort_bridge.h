@@ -44,10 +44,13 @@ typedef struct OrtValue     OrtValue;
 /**
  * Initialize the bridge.
  *
- * [ortDllPath]  Path to onnxruntime.dll (NULL to search system/default paths).
+ * [ortLibPath] Path to ONNX Runtime shared library:
+ *              - Windows: onnxruntime.dll
+ *              - Linux:   libonnxruntime.so
+ *              Pass NULL to search default paths.
  * Returns ORT_BRIDGE_OK on success, negative on failure.
  */
-ORT_BRIDGE_API int ort_bridge_init(const char* ortDllPath);
+ORT_BRIDGE_API int ort_bridge_init(const char* ortLibPath);
 
 /**
  * Shutdown the bridge. Frees all internal state.

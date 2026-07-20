@@ -192,11 +192,11 @@ class MlService {
     if (_initialized) return;
     try {
       final (lib, libPath) = _loadBridge();
-      AppLogger.info('ML', 'ort_bridge.dll 已加载', details: '路径: $libPath');
+      AppLogger.info('ML', '$_bridgeLib 已加载', details: '路径: $libPath');
       _loadFuncs(lib);
 
       final ortPath = _findOrt();
-      AppLogger.info('ML', 'onnxruntime.dll 已定位', details: '路径: $ortPath');
+      AppLogger.info('ML', '$_ortLib 已定位', details: '路径: $ortPath');
 
       final ortNative = ortPath.toNativeUtf8();
       try {
@@ -224,39 +224,64 @@ class MlService {
     }
   }
 
+  String get _libExt => Platform.isWindows ? '.dll' : '.so';
+  String get _ortLib => Platform.isWindows ? 'onnxruntime.dll' : 'libonnxruntime.so';
+  String get _bridgeLib => Platform.isWindows ? 'ort_bridge.dll' : 'libort_bridge.so';
+
   (DynamicLibrary, String) _loadBridge() {
     final candidates = <String>[
-      p.join(Directory.current.path, 'ort_bridge.dll'),
-      p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Debug', 'ort_bridge.dll'),
-      p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Release', 'ort_bridge.dll'),
+      // Current directory
+      p.join(Directory.current.path, _bridgeLib),
+      // Linux: Flutter bundle lib directory
+      if (!Platform.isWindows) ...[
+        p.join(p.dirname(Platform.resolvedExecutable), 'lib', _bridgeLib),
+        p.join(Directory.current.path, 'build', 'linux', 'x64', 'runner', 'bundle', 'lib', _bridgeLib),
+      ],
+      // Windows: build output directories
+      if (Platform.isWindows) ...[
+        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Debug', _bridgeLib),
+        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Release', _bridgeLib),
+      ],
+      // Native build output
+      p.join(Directory.current.path, 'native', 'ort_bridge', 'build', _bridgeLib),
     ];
-    try {
-      final ad = Platform.environment['APPDATA'];
-      if (ad != null) {
-        final sd = p.join(ad, 'com.example', 'spectra');
-        candidates.addAll([p.join(sd, 'ort_bridge.dll'), p.join(sd, 'models', 'ort_bridge.dll')]);
-      }
-    } catch (_) {}
-    for (final p in candidates) { try { return (DynamicLibrary.open(p), p); } catch (_) {} }
-    try { return (DynamicLibrary.open('ort_bridge.dll'), 'ort_bridge.dll (PATH)'); }
-    catch (e) { throw Exception('未找到 ort_bridge.dll: $e'); }
+    // Windows AppData search
+    if (Platform.isWindows) {
+      try {
+        final ad = Platform.environment['APPDATA'];
+        if (ad != null) {
+          final sd = p.join(ad, 'com.example', 'spectra');
+          candidates.addAll([p.join(sd, _bridgeLib), p.join(sd, 'models', _bridgeLib)]);
+        }
+      } catch (_) {}
+    }
+    for (final path in candidates) { try { return (DynamicLibrary.open(path), path); } catch (_) {} }
+    try { return (DynamicLibrary.open(_bridgeLib), '$_bridgeLib (PATH)'); }
+    catch (e) { throw Exception('未找到 $_bridgeLib: $e'); }
   }
 
   String _findOrt() {
     final candidates = <String>[
-      p.join(Directory.current.path, 'onnxruntime.dll'),
-      p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Debug', 'onnxruntime.dll'),
-      p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Release', 'onnxruntime.dll'),
+      p.join(Directory.current.path, _ortLib),
+      if (!Platform.isWindows) ...[
+        p.join(Directory.current.path, 'build', 'linux', 'x64', 'runner', 'bundle', 'lib', _ortLib),
+      ],
+      if (Platform.isWindows) ...[
+        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Debug', _ortLib),
+        p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner', 'Release', _ortLib),
+      ],
     ];
-    try {
-      final ad = Platform.environment['APPDATA'];
-      if (ad != null) {
-        final sd = p.join(ad, 'com.example', 'spectra');
-        candidates.addAll([p.join(sd, 'onnxruntime.dll'), p.join(sd, 'models', 'onnxruntime.dll')]);
-      }
-    } catch (_) {}
-    for (final p in candidates) { if (File(p).existsSync()) return p; }
-    return 'onnxruntime.dll';
+    if (Platform.isWindows) {
+      try {
+        final ad = Platform.environment['APPDATA'];
+        if (ad != null) {
+          final sd = p.join(ad, 'com.example', 'spectra');
+          candidates.addAll([p.join(sd, _ortLib), p.join(sd, 'models', _ortLib)]);
+        }
+      } catch (_) {}
+    }
+    for (final path in candidates) { if (File(path).existsSync()) return path; }
+    return _ortLib;
   }
 
   void _loadFuncs(DynamicLibrary lib) {

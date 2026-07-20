@@ -1,4 +1,4 @@
-import 'package:filepicker_windows/filepicker_windows.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -250,11 +250,12 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   /// 开始导出
   Future<void> _startExport() async {
     // 选择目标文件夹
-    final dialog = DirectoryPicker()..title = '选择导出目标文件夹';
-    final result = dialog.getDirectory();
+    final result = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: '选择导出目标文件夹',
+    );
     if (result == null) return;
 
-    final targetDir = result.path;
+    final targetDir = result;
 
     setState(() {
       _status = _ExportStatus.exporting;

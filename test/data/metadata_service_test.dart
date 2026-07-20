@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:exif/exif.dart';
+import 'package:path/path.dart' as p;
 import 'package:spectra/data/database/app_database.dart';
 import 'package:spectra/data/services/metadata_service.dart';
 import 'package:drift/native.dart';
@@ -32,18 +33,19 @@ void main() {
 
   /// Resolve the exif package test data directory across different machines.
   String? _findExifTestDir() {
-    final home = Platform.environment['USERPROFILE'] ?? '';
+    final home = Platform.environment['HOME'] ?? '';
     final localAppData = Platform.environment['LOCALAPPDATA'] ?? '';
-    final candidates = [
-      // Standard Windows Pub cache location
+    final userProfile = Platform.environment['USERPROFILE'] ?? '';
+    final candidates = <String>[
+      // Linux / macOS: .pub-cache in home
+      if (home.isNotEmpty)
+        p.join(home, '.pub-cache', 'hosted', 'pub.dev', 'exif-3.3.0', 'test', 'data'),
+      // Windows: Pub cache in LOCALAPPDATA
       if (localAppData.isNotEmpty)
-        '$localAppData\\Pub\\Cache\\hosted\\pub.dev\\exif-3.3.0\\test\\data',
-      // Alternative: .pub-cache in user profile
-      if (home.isNotEmpty)
-        '$home\.pub-cache\\hosted\\pub.dev\\exif-3.3.0\\test\\data',
-      // Chocolatey / manual install location
-      if (home.isNotEmpty)
-        '$home\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\exif-3.3.0\\test\\data',
+        p.join(localAppData, 'Pub', 'Cache', 'hosted', 'pub.dev', 'exif-3.3.0', 'test', 'data'),
+      // Windows: .pub-cache in USERPROFILE
+      if (userProfile.isNotEmpty)
+        p.join(userProfile, '.pub-cache', 'hosted', 'pub.dev', 'exif-3.3.0', 'test', 'data'),
     ];
     for (final path in candidates) {
       if (Directory(path).existsSync()) return path;
@@ -108,14 +110,14 @@ void main() {
     }
     final cacheDir = Directory(cacheDirPath);
 
-    final pngFile = File('${cacheDir.path}\\png-test.png');
+    final pngFile = File(p.join(cacheDir.path, 'png-test.png'));
     if (!await pngFile.exists()) {
       print('PNG test file not found');
       return;
     }
 
     final tempDir = Directory.systemTemp.createTempSync('spectra_exif_test_');
-    final tempFile = File('${tempDir.path}\\test_exif.png');
+    final tempFile = File(p.join(tempDir.path, 'test_exif.png'));
     await pngFile.copy(tempFile.path);
 
     try {

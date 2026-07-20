@@ -1,4 +1,4 @@
-import 'package:filepicker_windows/filepicker_windows.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -74,12 +74,12 @@ class FolderPanel extends ConsumerWidget {
   }
 
   void _showImportPicker(BuildContext context, WidgetRef ref) async {
-    final dialog = DirectoryPicker()
-      ..title = '选择要导入的照片文件夹';
+    final result = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: '选择要导入的照片文件夹',
+    );
 
-    final result = dialog.getDirectory();
     if (result != null) {
-      await ref.read(importProvider.notifier).importFolder(result.path);
+      await ref.read(importProvider.notifier).importFolder(result);
     }
   }
 }
@@ -143,12 +143,12 @@ class _FolderList extends ConsumerWidget {
   }
 
   void _showImportPicker(BuildContext context, WidgetRef ref) async {
-    final dialog = DirectoryPicker()
-      ..title = '选择要导入的照片文件夹';
+    final result = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: '选择要导入的照片文件夹',
+    );
 
-    final result = dialog.getDirectory();
     if (result != null) {
-      await ref.read(importProvider.notifier).importFolder(result.path);
+      await ref.read(importProvider.notifier).importFolder(result);
     }
   }
 }

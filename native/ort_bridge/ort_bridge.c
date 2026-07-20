@@ -14,37 +14,59 @@
 #define ORT_DLL_IMPORT
 #include "onnxruntime_c_api.h"
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 /* ─── Internal State ───────────────────────────────────────── */
 
+#ifdef _WIN32
 static HMODULE       g_ort_dll    = NULL;
+#else
+static void*         g_ort_dll    = NULL;
+#endif
 static const OrtApi* g_api        = NULL;
 
 /* ─── Helpers ──────────────────────────────────────────────── */
 
 static void* get_exports_table(void) {
-    /* OrtGetApiBase is the only directly exported symbol.
-       Get it from the loaded DLL. */
     if (!g_ort_dll) return NULL;
+#ifdef _WIN32
     return (void*)GetProcAddress(g_ort_dll, "OrtGetApiBase");
+#else
+    return dlsym(g_ort_dll, "OrtGetApiBase");
+#endif
 }
 
 /* ─── Public API ───────────────────────────────────────────── */
 
-ORT_BRIDGE_API int ort_bridge_init(const char* ortDllPath) {
+ORT_BRIDGE_API int ort_bridge_init(const char* ortLibPath) {
     if (g_api) return ORT_BRIDGE_OK; /* already initialized */
 
-    /* Load onnxruntime.dll */
-    const char* path = ortDllPath ? ortDllPath : "onnxruntime.dll";
+#ifdef _WIN32
+    const char* path = ortLibPath ? ortLibPath : "onnxruntime.dll";
     g_ort_dll = LoadLibraryA(path);
+#else
+    const char* path = ortLibPath ? ortLibPath : "libonnxruntime.so";
+    g_ort_dll = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+#endif
     if (!g_ort_dll) return ORT_BRIDGE_DLL_MISS;
 
     /* Get OrtGetApiBase */
-    typedef const OrtApiBase* (ORT_API_CALL * OrtGetApiBaseFunc)(void);
+    typedef const OrtApiBase* (*OrtGetApiBaseFunc)(void);
+#ifdef _WIN32
     OrtGetApiBaseFunc getApiBase = (OrtGetApiBaseFunc)GetProcAddress(g_ort_dll, "OrtGetApiBase");
+#else
+    OrtGetApiBaseFunc getApiBase = (OrtGetApiBaseFunc)dlsym(g_ort_dll, "OrtGetApiBase");
+#endif
     if (!getApiBase) {
+#ifdef _WIN32
         FreeLibrary(g_ort_dll);
+#else
+        dlclose(g_ort_dll);
+#endif
         g_ort_dll = NULL;
         return ORT_BRIDGE_INIT_FAIL;
     }
@@ -52,14 +74,22 @@ ORT_BRIDGE_API int ort_bridge_init(const char* ortDllPath) {
     /* Get OrtApiBase and then OrtApi */
     const OrtApiBase* base = getApiBase();
     if (!base) {
+#ifdef _WIN32
         FreeLibrary(g_ort_dll);
+#else
+        dlclose(g_ort_dll);
+#endif
         g_ort_dll = NULL;
         return ORT_BRIDGE_INIT_FAIL;
     }
 
     g_api = base->GetApi(ORT_API_VERSION);
     if (!g_api) {
+#ifdef _WIN32
         FreeLibrary(g_ort_dll);
+#else
+        dlclose(g_ort_dll);
+#endif
         g_ort_dll = NULL;
         return ORT_BRIDGE_INIT_FAIL;
     }
@@ -70,7 +100,11 @@ ORT_BRIDGE_API int ort_bridge_init(const char* ortDllPath) {
 ORT_BRIDGE_API void ort_bridge_shutdown(void) {
     g_api = NULL;
     if (g_ort_dll) {
+#ifdef _WIN32
         FreeLibrary(g_ort_dll);
+#else
+        dlclose(g_ort_dll);
+#endif
         g_ort_dll = NULL;
     }
 }
@@ -105,35 +139,37 @@ ORT_BRIDGE_API OrtStatus* ort_bridge_set_session_graph_optimization_level(
     return g_api->SetSessionGraphOptimizationLevel((OrtSessionOptions*)opts, (GraphOptimizationLevel)level);
 }
 
-/* ─── DirectML Execution Provider ──────────────────────────── */
+/* ─── Execution Provider ───────────────────────────────────── */
 
 ORT_BRIDGE_API int ort_bridge_enable_dml(void* opts, int deviceId) {
+#ifdef _WIN32
     if (!g_api) return ORT_BRIDGE_ERROR;
     if (!g_ort_dll) return ORT_BRIDGE_ERROR;
 
     /* OrtSessionOptionsAppendExecutionProvider_DML is exported directly
-       from onnxruntime.dll (not through the OrtApi vtable).
-       Try to load it dynamically – gracefully degrade to CPU if unavailable. */
+       from onnxruntime.dll (not through the OrtApi vtable). */
     typedef OrtStatus* (ORT_API_CALL * AppendExecutionProviderDmlFunc)(
         OrtSessionOptions*, int);
-    
-    AppendExecutionProviderDmlFunc appendDml = 
+
+    AppendExecutionProviderDmlFunc appendDml =
         (AppendExecutionProviderDmlFunc)GetProcAddress(
             g_ort_dll, "OrtSessionOptionsAppendExecutionProvider_DML");
-    
-    if (!appendDml) {
-        /* DirectML not available in this ONNX Runtime build – fall back to CPU */
-        return ORT_BRIDGE_ERROR;
-    }
+
+    if (!appendDml) return ORT_BRIDGE_ERROR;
 
     OrtStatus* status = appendDml((OrtSessionOptions*)opts, deviceId);
     if (status) {
-        /* DML init failed (e.g., no GPU, no DirectML support) – fall back to CPU */
         g_api->ReleaseStatus(status);
         return ORT_BRIDGE_ERROR;
     }
 
     return ORT_BRIDGE_OK;
+#else
+    /* DirectML is Windows-only; on Linux, use CPU or other EPs */
+    (void)opts;
+    (void)deviceId;
+    return ORT_BRIDGE_ERROR;
+#endif
 }
 
 /* ─── Session ──────────────────────────────────────────────── */

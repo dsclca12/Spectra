@@ -20,7 +20,7 @@ import 'ml_service.dart';
 ///    runs the thumbnail through the model to get color matrix and gamma, mapped to EditParams.
 /// 2. **Pure Dart simulation path**: When ONNX is unavailable, uses an intelligent
 ///    statistical model based on ImageAnalysis to simulate the IAT global branch output.
-///    This ensures the feature is always available, even without onnxruntime.dll.
+///    This ensures the feature is always available, even without the ONNX Runtime library.
 ///
 /// Mapping strategy (IAT output → EditParams):
 /// - gamma → exposure (log2 mapping)

@@ -30,8 +30,21 @@ build-release: ## Build Windows release
 build-debug: ## Build Windows debug
 	flutter build windows --debug
 
+build-linux-release: ## Build Linux release
+	flutter build linux --release
+
+build-linux-debug: ## Build Linux debug
+	flutter build linux --debug
+
+build-linux-native: ## Build native C libraries for Linux
+	mkdir -p native/ort_bridge/build && cd native/ort_bridge/build && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
+	mkdir -p native/preprocess/build && cd native/preprocess/build && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
+
 run: ## Run the app
 	flutter run -d windows
+
+run-linux: ## Run on Linux
+	flutter run -d linux
 
 format: ## Format Dart code
 	dart format lib/ test/
