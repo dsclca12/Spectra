@@ -53,3 +53,47 @@ final viewerImageProvider =
 
   return result;
 });
+
+/// 预览清理计数器 — 每生成一张预览递增，达到阈值时触发清理
+int _previewGenerateCount = 0;
+
+/// 预览缓存最大存活天数
+const _previewMaxAgeDays = 30;
+
+/// 每生成 N 张新预览后触发一次过期清理
+const _previewCleanInterval = 50;
+
+/// 懒清理：仅当生成新预览且达到阈值时才扫描目录
+/// 比定时器方案更简单，对用户无感知
+void _cleanStalePreviewsIfNeeded(String previewDir, int currentPhotoId) {
+  _previewGenerateCount++;
+  if (_previewGenerateCount < _previewCleanInterval) return;
+  _previewGenerateCount = 0;
+
+  // fire-and-forget：不阻塞预览加载
+  Future(() async {
+    try {
+      final dir = Directory(previewDir);
+      if (!await dir.exists()) return;
+      final cutoff = DateTime.now().subtract(
+        const Duration(days: _previewMaxAgeDays),
+      );
+      var deleted = 0;
+      await for (final entity in dir.list()) {
+        if (entity is File) {
+          try {
+            final stat = await entity.stat();
+            if (stat.modified.isBefore(cutoff)) {
+              await entity.delete();
+              deleted++;
+            }
+          } catch (_) {}
+        }
+      }
+      if (deleted > 0) {
+        // ignore: avoid_print
+        print('预览缓存清理：删除了 $deleted 个过期文件');
+      }
+    } catch (_) {}
+  });
+}
