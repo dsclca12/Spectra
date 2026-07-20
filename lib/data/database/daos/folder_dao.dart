@@ -68,16 +68,33 @@ class FolderDao extends DatabaseAccessor<AppDatabase> with _$FolderDaoMixin {
       );
 
   /// 修复所有文件夹的照片计数（启动时调用）
-  /// 扫描数据库中 photos 表，按 folder_id 分组统计实际数量并回写
+  ///
+  /// 性能优化：单次 SQL GROUP BY 查询替代 N 次独立 COUNT 查询。
+  /// 原实现对每个文件夹执行一条 SELECT COUNT(*)，N 个文件夹 = N 次 DB 往返。
+  /// 现用 GROUP BY 一次性获取所有文件夹的真实照片数，再逐条回写差异。
+  /// 注意：逐条回写不可避免，因为 drift 的 batch update 不支持按条件更新不同值。
+  /// 若文件夹数量极大（>1000），可考虑用临时表 + 单条 UPDATE ... FROM 替代。
   Future<void> repairAllPhotoCounts() async {
+    // 单次 GROUP BY 查询：folder_id → COUNT(*)
+    // 一次性获取所有文件夹的真实照片数，避免 N 次独立 COUNT
+    final countQuery = await (selectOnly(photos)
+          ..addColumns([photos.folderId, photos.id.count()])
+          ..where(photos.folderId.isNotNull())
+          ..groupBy([photos.folderId]))
+        .get();
+
+    // 将查询结果转为 Map<folderId, actualCount>
+    final actualCounts = <int, int>{};
+    for (final row in countQuery) {
+      final folderId = row.read(photos.folderId)!;
+      final count = row.read(photos.id.count()) ?? 0;
+      actualCounts[folderId] = count;
+    }
+
+    // 逐条回写差异 — 只更新计数不一致的文件夹
     final allFolders = await getAll();
     for (final folder in allFolders) {
-      // 用 SQL COUNT 查询该文件夹的实际照片数
-      final result = await (selectOnly(photos)
-            ..addColumns([photos.id.count()])
-            ..where(photos.folderId.equals(folder.id)))
-          .get();
-      final actualCount = result.first.read(photos.id.count()) ?? 0;
+      final actualCount = actualCounts[folder.id] ?? 0;
       if (folder.photoCount != actualCount) {
         await updatePhotoCount(folder.id, actualCount);
       }
