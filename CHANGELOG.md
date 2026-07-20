@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-07-20
+
+### Added
+
+- **Scroll Pagination**: New `catalogPageOffsetProvider` for incremental page loading (200 photos/page).
+- **Import Dialog Deduplication**: Shared `showImportDialog()` function eliminating duplicate dialog code.
+
+### Changed
+
+- **Import Screens Refactored**: `HomeScreen` and `GridPanel` now share the same import dialog logic.
+
+### Technical
+
+- Decoupled import dialog from widget tree into standalone utility function.
+
+---
+
+## [0.2.1] — 2026-07-20
+
+### Fixed
+
+- **Parallelized Import Dedup**: `getExistingPaths()` batch SQLite IN queries now run in parallel via `Future.wait`, yielding 3-8× faster dedup for 5000+ file imports.
+
+### Performance
+
+- SQLite WAL mode's concurrent-read capability is now fully utilized during import deduplication.
+
+---
+
+## [0.2.0] — 2026-07-20
+
+### Fixed
+
+- **SQLite `cache_spill` PRAGMA**: `PRAGMA cache_spill=200` was silently ignored because `cache_spill` is a boolean (ON/OFF), not a page count. Fixed to `PRAGMA cache_spill=ON`.
+- **Fire-and-forget Safety**: Added `.catchError()` fallback to EXIF background tasks in `ImportService` to prevent unhandled promise rejections.
+
+### Performance
+
+- **Thumbnail Cache Stats**: `getCacheSize()` and `pruneCache()` now use `Future.wait` for parallel `stat()` calls, 5-10× faster on directories with thousands of files.
+- **LRU Cache Cleanup**: Batch file deletion instead of serial `await` per file, reducing I/O round-trips.
+- **WIC Decode Concurrency**: Increased from 4 to 6 (I/O-bound workload, low CPU impact).
+- **Temp File Collision Fix**: Replaced `DateTime.microsecondsSinceEpoch` with atomic counter for WIC temp file names.
+- **Stale Temp File Cleanup**: Added `cleanStaleTempFiles()` to purge WIC temp files older than 24 hours.
+- **RAW Preview Lazy Cleanup**: Auto-clean preview cache every 50 new previews to prevent unbounded disk usage.
+
+### Changed
+
+- **Filmstrip Rebuild Scope**: Used `Selector` to isolate selection state listening, avoiding full panel rebuild on unrelated selection changes.
+- **Semaphore Documentation**: Added concurrency safety notes and `finally`-guarded usage contract.
+
+---
+
 ## [0.1.0] — 2026-07-20
 
 ### Added
