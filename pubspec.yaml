@@ -3,6 +3,18 @@ description: "面向专业摄影师的 Windows 桌面端照片分类与资产管
 publish_to: "none"
 version: 0.1.0
 
+homepage: https://github.com/dsclca12/Spectra
+repository: https://github.com/dsclca12/Spectra.git
+issue_tracker: https://github.com/dsclca12/Spectra/issues
+documentation: https://github.com/dsclca12/Spectra/docs
+
+topics:
+  - photography
+  - dam
+  - photo-management
+  - windows
+  - flutter
+
 environment:
   sdk: ">=3.5.0 <4.0.0"
   flutter: ">=3.29.0"
