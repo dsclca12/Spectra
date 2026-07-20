@@ -39,5 +39,16 @@ We prefer all communications in English or Chinese.
 
 - We will acknowledge receipt of your vulnerability report within 48 hours
 - We will send a more detailed response within 5 business days
-- We will keep you informed of progress toward a fix
+- We will keep you informed of progress toward a fix and provide an estimated timeline
 - We will publicly credit you for the discovery (unless you prefer to remain anonymous)
+
+## Supported Versions
+
+| Version | Supported |
+|---------|-----------|
+| 0.1.x   | ✅ Active development |
+| < 0.1   | ❌ Not released |
+
+## Disclosure Timeline
+
+We aim to follow a **90-day disclosure deadline**: we will notify you of the fix within 90 days of the original report. If a fix cannot be prepared within that timeframe, we will communicate the reason and an updated timeline.
