@@ -249,6 +249,18 @@ class _PhotoGridItemState extends ConsumerState<_PhotoGridItem> {
       overlay.size.height - tapPosition.dy,
     );
 
+    // ── 上下文菜单：批量操作 ──
+    //
+    // ⚡ 性能说明（v0.4.9）：
+    // 每个操作先调用 catalogService 的批量 API（单条 SQL），然后：
+    // 1. `ref.invalidate(catalogProvider)` — 刷新照片列表，保证网格视图更新
+    // 2. 对每个目标 ID 调用 `ref.invalidate(photoByIdProvider(id))` —
+    //    确保打开的详情面板或独立 photo widget 同步更新
+    //
+    // `ref.invalidate` 本身是 O(1) 轻量操作 — 仅标记为「下次读取时重新计算」，
+    // 不会立即触发重建，所以即使 targetIds 包含数百个项目，开销也可忽略。
+    // 这是「显式优于隐式」的设计：宁可多 invalidate 确保一致性，
+    // 也不冒列表与详情不同步的风险。
     showMenu<void>(
       context: context,
       position: relativeRect,

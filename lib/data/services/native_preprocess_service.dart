@@ -52,24 +52,43 @@ typedef ComputeImageStatsDart = void Function(
 ///
 /// 加载 `nchw_preprocess.dll` 并使用 FFI 调用其函数。
 /// 如果 DLL 不可用，回退到纯 Dart 实现。
+///
+/// ⚡ 性能优化（v0.4.9）：
+/// - 旧实现：构造函数中同步加载 DLL（file.existsSync()），阻塞主线程。
+///   对于使用 AI 功能时才需要加载的场景不友好。
+/// - 新实现：异步延迟加载，构造函数只发起 Future（非阻塞），
+///   首次调用 rgbaToNCHW / computeStats 时可能尚未加载完成，
+///   此时自动回退到纯 Dart 实现。确保加载完成可 await ensureLoaded()。
+/// - `Directory.current.path` 在 Flutter 中不可靠（随引擎启动方式变化），
+///   改为先从 `Platform.resolvedExecutable` 推导 DLL 路径。
 class NativePreprocessService {
   DynamicLibrary? _lib;
   NchwRgbaToPlanarDart? _rgbaToPlanar;
   ComputeImageStatsDart? _computeStats;
   bool _initialized = false;
+  late final Future<void> _loadFuture;
 
   /// 是否成功加载原生库
   bool get isAvailable => _initialized;
 
-  /// 初始化：尝试加载原生 DLL
+  /// 构造函数 — 立即发起异步加载（非阻塞），返回后即可使用实例。
+  /// 加载完成前调用 rgbaToNCHW 会静默回退到纯 Dart 实现。
+  /// 如需确保原生库已加载，请 await ensureLoaded()。
   NativePreprocessService() {
-    _tryLoadLibrary();
+    _loadFuture = _initAsync();
   }
 
-  void _tryLoadLibrary() {
-    if (_initialized) return;
+  /// 等待原生库加载完成
+  Future<void> ensureLoaded() => _loadFuture;
+
+  Future<void> _initAsync() async {
     try {
+      // 候选路径列表：
+      // 1. 可执行文件同级目录（发布时 DLL 应在此处）
+      // 2. 构建输出目录（开发阶段）
+      final exeDir = p.dirname(Platform.resolvedExecutable);
       final candidates = [
+        p.join(exeDir, 'nchw_preprocess.dll'),
         p.join(Directory.current.path, 'nchw_preprocess.dll'),
         p.join(Directory.current.path, 'build', 'windows', 'x64', 'runner',
             'Debug', 'nchw_preprocess.dll'),
@@ -81,7 +100,7 @@ class NativePreprocessService {
 
       for (final path in candidates) {
         final file = File(path);
-        if (file.existsSync()) {
+        if (await file.exists()) {
           _lib = DynamicLibrary.open(path);
           break;
         }
