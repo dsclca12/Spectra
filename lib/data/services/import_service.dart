@@ -9,6 +9,7 @@ import '../database/daos/photo_dao.dart';
 import '../database/daos/folder_dao.dart';
 import '../../core/concurrency.dart';
 import '../../core/enums.dart';
+import '../../core/logging.dart';
 import 'file_system_service.dart';
 import 'metadata_service.dart';
 import 'thumbnail_service.dart';
@@ -176,20 +177,28 @@ class ImportService {
   /// 通过路径更新 EXIF，避免需要先取回 photoId
   void _enqueueExifByPath(String filePath) {
     // fire-and-forget — 不 await，导入立即继续
+    // 注意：顶级 .then() 未 catch 的异常会进入未处理异常通道。
+    // 这里 .then() 内部的 try/catch 已覆盖所有路径，
+    // 但 acquire() 本身可能因 Semaphore 内部错误抛出。
+    // 添加 .catchError 作为兜底，防止未捕获异常。
     _exifSemaphore.acquire().then((release) async {
       try {
         final exifData = await _metadataService.readExif(filePath);
         if (exifData != null) {
           await _photoDao.updateExifByPath(filePath, exifData);
         }
-        // 无论是否读取到 EXIF，都通知 UI 刷新
+        // 无论是否读取到 EXIF，都通知 UI 刷新（显示数据或无 EXIF 提示）
         onExifUpdated?.call(filePath);
       } catch (_) {
-        // EXIF 失败不影响导入 — 但仍通知 UI
+        // EXIF 失败不影响导入 — 但仍通知 UI，避免一直处于加载中状态
         onExifUpdated?.call(filePath);
       } finally {
         release();
       }
+    }).catchError((Object error) {
+      // 兜底：acquire() 本身失败时的错误处理
+      // 例如 Semaphore 内部 _waitQueue 操作异常（极低概率）
+      AppLogger.warn('ImportService', 'EXIF 任务排队失败', details: error.toString());
     });
   }
 

@@ -28,7 +28,10 @@ class ImageDecoderService {
 
   /// Semaphore to limit concurrent WIC (PowerShell) processes.
   /// Each PowerShell process uses ~30-50MB memory; 4 concurrent = 120-200MB.
-  final Semaphore _wicSemaphore = Semaphore(4);
+  /// 调高到 6：WIC 解码大部分时间花在 I/O 等待（读 RAW 文件），
+  /// CPU 占用不高，适度增加并发可以提升批量缩略图生成吞吐量。
+  /// 若内存不足（观察到 PowerShell 进程数 > 4 时内存 > 300MB），可降回 4。
+  final Semaphore _wicSemaphore = Semaphore(6);
 
   /// Flutter 原生支持的格式（dart:ui / Skia 可直接解码）
   static const Set<String> flutterSupportedExtensions = {
@@ -252,10 +255,10 @@ __WIDTH_LINE__
   }) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      final tempPath = p.join(
-        tempDir.path,
-        'spectra_wic_${DateTime.now().microsecondsSinceEpoch}.png',
-      );
+      // 用 UUID -style 文件名避免并发解码时的文件名冲突
+      // microsecond 精度在批量导入大量 RAW 文件时仍可能碰撞
+      final tempName = 'spectra_wic_${_nextTempId()}.png';
+      final tempPath = p.join(tempDir.path, tempName);
 
       final result = await _decodeAndSavePngWithWIC(
         filePath,
@@ -271,10 +274,48 @@ __WIDTH_LINE__
       }
 
       final image = await _decodeWithDartUI(tempPath);
-      await File(tempPath).delete();
+      // 解码完毕后立即删除临时文件，避免临时目录积累大量 WIC 缓存
+      // 注意：即使删除失败也不影响主流程，静默忽略
+      try {
+        await File(tempPath).delete();
+      } catch (_) {
+        // 临时文件删除失败不影响调用方
+      }
       return image;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// 线程安全的递增临时文件 ID — 替代 DateTime 方式避免碰撞
+  static int _tempIdCounter = 0;
+  static int _nextTempId() {
+    return ++_tempIdCounter;
+  }
+
+  /// 清理超过 24 小时未被访问的 WIC 临时文件
+  /// 在应用启动时调用一次即可，避免临时目录无限膨胀
+  Future<int> cleanStaleTempFiles() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+      var count = 0;
+      await for (final entity in tempDir.list()) {
+        if (entity is File && entity.path.contains('spectra_wic_')) {
+          try {
+            final stat = await entity.stat();
+            if (stat.modified.isBefore(cutoff)) {
+              await entity.delete();
+              count++;
+            }
+          } catch (_) {
+            // 跳过无法 stat 或删除的文件
+          }
+        }
+      }
+      return count;
+    } catch (_) {
+      return 0;
     }
   }
 }

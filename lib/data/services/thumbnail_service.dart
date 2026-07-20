@@ -153,60 +153,67 @@ class ThumbnailService {
   }
 
   /// 获取缓存大小
+  ///
+  /// 使用 Future.wait 并行 stat 所有文件，避免逐个 await 造成 I/O 串行化。
+  /// 对于包含数万个缩略图的大缓存，串行 stat 可能耗时数秒。
   Future<int> getCacheSize() async {
     final cacheDir = await _getCacheDir();
     final dir = Directory(cacheDir);
     if (!await dir.exists()) return 0;
 
-    int total = 0;
-    await for (final entity in dir.list(recursive: true)) {
-      if (entity is File) {
-        final stat = await entity.stat();
-        total += stat.size;
-      }
-    }
-    return total;
+    final entities = await dir.list(recursive: true).toList();
+    final stats = await Future.wait(
+      entities.whereType<File>().map((f) => f.stat()),
+    );
+    return stats.fold<int>(0, (sum, s) => sum + s.size);
   }
 
   /// LRU 清理 — 当缓存超过上限时删除最旧的缩略图文件
   ///
   /// 按文件最后修改时间排序，删除最旧的文件直到总大小低于上限。
   /// 建议在应用空闲时或导入完成后调用。
+  ///
+  /// 优化：先用 Future.wait 并行 stat 收集文件信息，再用批量删除减少 I/O 次数。
   Future<void> pruneCache() async {
     final cacheDir = await _getCacheDir();
     final dir = Directory(cacheDir);
     if (!await dir.exists()) return;
 
-    // 收集所有缓存文件及大小、修改时间
-    final files = <_CacheEntry>[];
+    // 并行 stat 所有文件 — list + stat 串行对数千文件很慢
+    final entities = await dir.list().toList();
+    final fileEntries = <_CacheEntry>[];
     int totalSize = 0;
-    await for (final entity in dir.list()) {
-      if (entity is File) {
-        final stat = await entity.stat();
-        files.add(_CacheEntry(entity, stat.size, stat.modified));
-        totalSize += stat.size;
-      }
+
+    final stats = await Future.wait(
+      entities.whereType<File>().map((f) => f.stat()),
+    );
+    for (var i = 0; i < stats.length; i++) {
+      final file = entities.whereType<File>().elementAt(i);
+      final stat = stats[i];
+      fileEntries.add(_CacheEntry(file, stat.size, stat.modified));
+      totalSize += stat.size;
     }
 
     if (totalSize <= AppConstants.maxCacheSizeBytes) return;
 
     // 按修改时间升序排序（最旧在前）
-    files.sort((a, b) => a.modified.compareTo(b.modified));
+    fileEntries.sort((a, b) => a.modified.compareTo(b.modified));
 
-    // 删除最旧的文件直到低于上限
-    for (final entry in files) {
+    // 批量删除 — 收集要删的文件路径后并行删除
+    final toDelete = <File>[];
+    for (final entry in fileEntries) {
       if (totalSize <= AppConstants.maxCacheSizeBytes) break;
-      try {
-        await entry.file.delete();
-        totalSize -= entry.size;
-        // 同时清理内存缓存
-        final fileName = p.basename(entry.file.path);
-        final parts = fileName.replaceAll('.png', '').split('_');
-        if (parts.length == 2) {
-          _pathCache.remove('${parts[0]}_${parts[1]}');
-        }
-      } catch (_) {
-        // 删除失败忽略
+      toDelete.add(entry.file);
+      totalSize -= entry.size;
+    }
+    await Future.wait(toDelete.map((f) => f.delete().catchError((_) {})));
+
+    // 清理变动的项对应的内存缓存
+    for (final entry in toDelete) {
+      final fileName = p.basename(entry.path);
+      final parts = fileName.replaceAll('.png', '').split('_');
+      if (parts.length == 2) {
+        _pathCache.remove('${parts[0]}_${parts[1]}');
       }
     }
   }

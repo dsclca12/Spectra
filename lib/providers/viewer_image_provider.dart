@@ -47,5 +47,9 @@ final viewerImageProvider =
     targetWidth: AppConstants.previewMaxSize,
   );
 
+  // 懒清理：每生成 50 张新预览后触发一次过期缓存清理
+  // 避免预览目录无限膨胀（RAW 预览 PNG 每张约 2-5MB）
+  _cleanStalePreviewsIfNeeded(previewDir, photo.id);
+
   return result;
 });

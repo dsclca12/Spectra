@@ -67,8 +67,11 @@ class _FilmstripPanelState extends ConsumerState<FilmstripPanel> {
   @override
   Widget build(BuildContext context) {
     final catalogAsync = ref.watch(catalogProvider);
-    final selection = ref.watch(selectionProvider);
-    final selectedId = selection.hasSelection ? selection.selectedIds.first : null;
+    // 用 select 只监听选中 ID 的变化，避免 selectionProvider 中其他状态变化
+    // （如全选/清除选中时的 selectedIds 集合操作）导致胶片条整体重建
+    final selectedId = ref.watch(
+      selectionProvider.select((s) => s.hasSelection ? s.selectedIds.first : null),
+    );
 
     return Container(
       color: Theme.of(context).canvasColor,

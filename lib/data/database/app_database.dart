@@ -45,12 +45,18 @@ class AppDatabase extends _$AppDatabase {
         db.execute('PRAGMA temp_store=MEMORY;');
         // 20MB 页缓存（约 5120 页 × 4KB），覆盖大多数工作集
         db.execute('PRAGMA cache_size=-20480;');
-        // 查询计划缓存 200 条
-        db.execute('PRAGMA cache_spill=200;');
+        // 启用 cache_spill — SQLite 在缓存满时自动将脏页刷入磁盘
+        // 注意：cache_spill 是布尔值（ON/OFF），不是页数！
+        // 旧代码曾错误写成 cache_spill=200（用数值表示条数），
+        // SQLite 会静默忽略无效值导致 cache_spill=OFF
+        db.execute('PRAGMA cache_spill=ON;');
         // mmap 映射 256MB — 大数据库读取不经过页缓存直接内存映射
+        // 适合照片管理场景的频繁只读查询（浏览/筛选）
         db.execute('PRAGMA mmap_size=268435456;');
         // WAL 自动 checkpoint 每 1000 页
         db.execute('PRAGMA wal_autocheckpoint=1000;');
+        // 优化 LIKE/IN 子句的索引使用 — 查询照片文件名/标签时受益
+        db.execute('PRAGMA case_sensitive_like=OFF;');
       },
     ));
   }
