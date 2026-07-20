@@ -146,37 +146,46 @@ flutter doctor -v
 
 ```
 spectra/
-├── lib/
-│   ├── main.dart                  # 应用入口
-│   ├── app.dart                   # 根 Widget
-│   ├── core/                      # 基础设施
-│   │   ├── constants.dart
-│   │   ├── theme/                 # 主题系统
-│   │   ├── extensions/            # 扩展方法
-│   │   ├── utils/                 # 工具函数
-│   │   └── platform/              # Windows 平台 FFI
-│   ├── data/                      # 数据层
-│   │   ├── database/              #   Drift 数据库
+├── lib/                           # 🎯 应用核心代码
+│   ├── main.dart                  #   应用入口
+│   ├── app.dart                   #   根 Widget
+│   ├── core/                      #   基础设施层
+│   │   ├── constants.dart         #     全局常量 + 功能开关
+│   │   ├── enums.dart             #     核心枚举类型
+│   │   ├── theme.dart             #     主题系统
+│   │   ├── errors.dart            #     错误定义
+│   │   ├── logging.dart           #     日志系统
+│   │   └── concurrency.dart       #     并发工具
+│   ├── data/                      #   数据层
+│   │   ├── database/              #     Drift ORM 数据库
 │   │   │   ├── app_database.dart
 │   │   │   ├── daos/              #     数据访问对象
 │   │   │   └── migrations/        #     数据库迁移
-│   │   ├── models/                #   纯数据模型
-│   │   ├── repositories/          #   数据仓储
-│   │   └── services/              #   业务服务
-│   ├── providers/                 # Riverpod Provider
-│   └── ui/                        # UI 层
-│       ├── components/            #   通用组件
-│       ├── screens/               #   页面
-│       └── layout/                #   布局管理
-├── assets/                        # 资源文件
-│   ├── icons/
-│   └── locales/                   # 国际化
-├── test/
-│   ├── unit/
-│   ├── widget/
-│   └── integration/
-├── windows/                       # Windows 平台代码
-├── docs/                          # 文档
+│   │   ├── models/                #     数据模型
+│   │   ├── services/              #     业务服务
+│   │   └── ... 
+│   ├── providers/                 #   Riverpod 状态管理
+│   ├── ui/                        #   UI 层
+│   │   ├── components/            #     通用可复用组件
+│   │   ├── screens/               #     页面
+│   │   └── layout/                #     布局组件
+│   └── ...
+├── assets/                        # 📁 资源文件
+│   ├── icons/                     #     应用图标
+│   └── shaders/                   #     GLSL 着色器
+├── native/                        # 🔧 原生 FFI 模块
+│   ├── ort_bridge/                #     ONNX Runtime 绑定
+│   └── preprocess/                #     图像预处理
+├── test/                          # 🧪 测试
+│   ├── core/                      #     单元测试
+│   ├── data/                      #     数据层测试
+│   └── providers/                 #     Provider 测试
+├── windows/                       # 🪟 Windows 平台代码
+├── docs/                          # 📖 文档
+├── .github/                       # 🤖 GitHub 配置
+│   ├── workflows/                 #     CI/CD 工作流
+│   ├── ISSUE_TEMPLATE/            #     Issue 模板
+│   └── ...
 ├── pubspec.yaml
 └── README.md
 ```
@@ -196,11 +205,11 @@ spectra/
 
 ## 路线图
 
-```
-Phase 1 ─── MVP 核心分类工作流          2026 Q3
-Phase 2 ─── 专业工作流 + IPTC 编辑        2026 Q4
-Phase 3 ─── 进阶功能（地图/协作/脚本等）   2027 Q1+
-```
+| Phase | 内容 | 时间 |
+|-------|------|------|
+| 🚀 **Phase 1** | MVP 核心分类工作流（导入 → 筛选 → 标注 → 搜索） | 🟢 已发布 v0.1.0 |
+| 📝 **Phase 2** | 专业工作流 — IPTC 编辑、智能导出、自动备份 | 🔄 开发中 — 2026 Q4 |
+| 🗺️ **Phase 3** | 进阶功能 — 地图视图、协作共享、脚本自动化 | 📅 规划中 — 2027 Q1+ |
 
 详见 [ROADMAP.md](docs/ROADMAP.md)
 
