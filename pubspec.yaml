@@ -36,7 +36,7 @@ dependencies:
   # 文件与系统
   watcher: ^1.1.1
   desktop_drop: ^0.5.0
-  filepicker_windows: ^2.1.0
+  filepicker_windows: ^3.0.2
   window_manager: ^0.4.3
 
   # EXIF
