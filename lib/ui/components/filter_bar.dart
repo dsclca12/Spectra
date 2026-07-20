@@ -19,7 +19,7 @@ class FilterBar extends ConsumerWidget {
     final viewMode = ref.watch(viewModeProvider);
 
     return Container(
-      height: 48,
+      height: 40,
       color: Theme.of(context).canvasColor,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
@@ -32,7 +32,7 @@ class FilterBar extends ConsumerWidget {
             tooltip: '切换视图',
             onTap: () => ref.read(viewModeProvider.notifier).toggleViewMode(),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
 
           // 缩略图尺寸
           _IconButton(
@@ -45,7 +45,7 @@ class FilterBar extends ConsumerWidget {
             tooltip: '缩小缩略图',
             onTap: () => ref.read(viewModeProvider.notifier).decreaseThumbSize(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           const _VerticalDividerSmall(),
 
           // 星级筛选
@@ -448,25 +448,37 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: Material(
         color: active
-            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(4),
+            ? theme.colorScheme.primary.withValues(alpha: 0.18)
+            : theme.hoverColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          borderRadius: BorderRadius.circular(14),
+          hoverColor: theme.hoverColor,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: active
+                    ? theme.colorScheme.primary.withValues(alpha: 0.6)
+                    : theme.dividerColor,
+                width: active ? 1 : 0.5,
+              ),
+            ),
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                 color: active
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary,
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -538,33 +550,49 @@ class _SearchFieldState extends State<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      focusNode: _focusNode,
-      decoration: InputDecoration(
-        hintText: '搜索文件名、标签、标题...',
-        hintStyle: const TextStyle(fontSize: 12),
-        prefixIcon: const Icon(Icons.search, size: 16),
-        suffixIcon: widget.value.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear, size: 16),
-                onPressed: () {
-                  _controller.clear();
-                  _onChanged('');
-                },
-              )
-            : null,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
-          borderSide: BorderSide.none,
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 30,
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        decoration: InputDecoration(
+          hintText: '搜索文件名、标签、标题...',
+          hintStyle: TextStyle(fontSize: 12, color: theme.colorScheme.secondary),
+          prefixIcon: Icon(Icons.search, size: 16,
+              color: theme.colorScheme.secondary),
+          prefixIconConstraints: const BoxConstraints(minWidth: 28),
+          suffixIcon: widget.value.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 14),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                  onPressed: () {
+                    _controller.clear();
+                    _onChanged('');
+                  },
+                )
+              : null,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: theme.dividerColor, width: 0.5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: theme.dividerColor, width: 0.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.2),
+          ),
+          filled: true,
+          fillColor: theme.scaffoldBackgroundColor,
         ),
-        filled: true,
-        fillColor: Theme.of(context).scaffoldBackgroundColor,
+        style: const TextStyle(fontSize: 12),
+        onChanged: _onChanged,
       ),
-      style: const TextStyle(fontSize: 12),
-      onChanged: _onChanged,
     );
   }
 }
@@ -585,13 +613,11 @@ class _IconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Icon(icon, size: 18,
-              color: Theme.of(context).colorScheme.onSurface),
+      child: IconTheme(
+        data: IconTheme.of(context).copyWith(size: 18),
+        child: IconButton(
+          icon: Icon(icon),
+          onPressed: onTap,
         ),
       ),
     );

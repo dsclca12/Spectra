@@ -80,6 +80,7 @@ class _PhotoGridItem extends ConsumerStatefulWidget {
 class _PhotoGridItemState extends ConsumerState<_PhotoGridItem> {
   /// 缓存右键点击位置，用于上下文菜单定位
   Offset? _lastTapPosition;
+  bool _hovered = false;
 
   Photo get photo => widget.photo;
   double get thumbSize => widget.thumbSize;
@@ -92,96 +93,125 @@ class _PhotoGridItemState extends ConsumerState<_PhotoGridItem> {
     final isSelected = ref.watch(
       selectionProvider.select((s) => s.isSelected(photo.id)),
     );
+    final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTapDown: (details) {
-        _lastTapPosition = details.globalPosition;
-      },
-      onTap: () {
-        final selection = ref.read(selectionProvider);
-        if (selection.hasSelection) {
-          ref.read(selectionProvider.notifier).toggle(photo.id);
-        } else {
-          ref.read(selectionProvider.notifier).select(photo.id);
-        }
-      },
-      onDoubleTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ViewerScreen(photoId: photo.id),
-          ),
-        );
-      },
-      onSecondaryTap: () => _showContextMenu(context),
-      onLongPress: () => _showContextMenu(context),
-      child: Stack(
-        children: [
-          // 缩略图
-          Positioned.fill(
-            child: ThumbnailWidget(
-              photoId: photo.id,
-              filePath: photo.path,
-              size: thumbSize.toInt(),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (details) {
+          _lastTapPosition = details.globalPosition;
+        },
+        onTap: () {
+          final selection = ref.read(selectionProvider);
+          if (selection.hasSelection) {
+            ref.read(selectionProvider.notifier).toggle(photo.id);
+          } else {
+            ref.read(selectionProvider.notifier).select(photo.id);
+          }
+        },
+        onDoubleTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ViewerScreen(photoId: photo.id),
             ),
-          ),
-
-          // 选中边框
-          if (isSelected)
+          );
+        },
+        onSecondaryTap: () => _showContextMenu(context),
+        onLongPress: () => _showContextMenu(context),
+        child: Stack(
+          children: [
+            // 缩略图
             Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
+              child: ThumbnailWidget(
+                photoId: photo.id,
+                filePath: photo.path,
+                size: thumbSize.toInt(),
               ),
             ),
 
-          // 旗标图标（左上角）
-          if (photo.pickLabel > 0)
-            Positioned(
-              top: 4,
-              left: 4,
-              child: _PickLabelIcon(pickLabel: photo.pickLabel),
-            ),
-
-          // 星级（右下角，数字显示）
-          if (photo.rating > 0)
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFB900),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  '${photo.rating}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                    height: 1.0,
+            // 悬停遮罩 — 微亮 + 顶部渐变（用于突出可点击）
+            if (_hovered && !isSelected)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-          // 色标条（底部）
-          if (photo.colorLabel > 0)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: ColorLabelBar(colorLabel: photo.colorLabel),
-            ),
+            // 选中边框
+            if (isSelected)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: theme.colorScheme.primary,
+                        width: 2.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
-          // 选中序号
-          if (isSelected)
-            _SelectionBadge(photoId: photo.id),
-        ],
+            // 旗标图标（左上角）
+            if (photo.pickLabel > 0)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: _PickLabelIcon(pickLabel: photo.pickLabel),
+              ),
+
+            // 星级（右下角，数字显示）
+            if (photo.rating > 0)
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB900),
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '${photo.rating}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              ),
+
+            // 色标条（底部）
+            if (photo.colorLabel > 0)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: ColorLabelBar(colorLabel: photo.colorLabel),
+              ),
+
+            // 选中序号
+            if (isSelected)
+              _SelectionBadge(photoId: photo.id),
+          ],
+        ),
       ),
     );
   }

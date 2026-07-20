@@ -123,7 +123,7 @@ class _MenuBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         color: Theme.of(context).canvasColor,
         border: Border(
@@ -135,6 +135,15 @@ class _MenuBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
+          // 应用标识
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 8),
+            child: Icon(
+              Icons.photo_camera,
+              size: 18,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
           _MenuItem(AppStrings.menuFile, [
             _MenuAction(AppStrings.menuImportFolder, 'Ctrl+I', onImport),
             _MenuAction(AppStrings.menuExport, '', () => _showExportDialog(context)),
@@ -164,6 +173,21 @@ class _MenuBar extends ConsumerWidget {
           _MenuItem(AppStrings.menuHelp, [
             _MenuAction(AppStrings.menuAbout, '', () => _showAboutDialog(context)),
           ]),
+          const Spacer(),
+          // 右侧快捷导入按钮
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Tooltip(
+              message: '导入文件夹 (Ctrl+I)',
+              child: IconTheme(
+                data: IconTheme.of(context).copyWith(size: 16),
+                child: IconButton(
+                  icon: const Icon(Icons.folder_open),
+                  onPressed: onImport,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -221,10 +245,38 @@ class _MenuBar extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.photo_camera,
+          size: 40,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         title: const Text(AppStrings.appName),
-        content: const Text(
-          '${AppStrings.appDescription}\n'
-          '${AppStrings.settingsLabelVersion}: ${AppStrings.appVersion}',
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(AppStrings.appDescription),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 12),
+              _AboutRow(
+                label: AppStrings.settingsLabelVersion,
+                value: AppStrings.appVersion,
+              ),
+              const SizedBox(height: 6),
+              const _AboutRow(
+                label: AppStrings.settingsLabelLicense,
+                value: AppStrings.appLicense,
+              ),
+              const SizedBox(height: 6),
+              const _AboutRow(
+                label: AppStrings.settingsLabelFramework,
+                value: AppStrings.appFramework,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -239,30 +291,51 @@ class _MenuBar extends ConsumerWidget {
 
 }
 
-class _MenuItem extends StatelessWidget {
+class _MenuItem extends StatefulWidget {
   final String label;
   final List<_MenuAction> actions;
 
   const _MenuItem(this.label, this.actions);
 
   @override
+  State<_MenuItem> createState() => _MenuItemState();
+}
+
+class _MenuItemState extends State<_MenuItem> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     return PopupMenuButton<void>(
-      offset: const Offset(0, 48),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Theme.of(context).colorScheme.onSurface,
+      offset: const Offset(0, 40),
+      onOpened: () => setState(() {}),
+      onCanceled: () => setState(() {}),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: _hovered
+                ? Theme.of(context).hoverColor
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ),
-      itemBuilder: (context) => actions
+      itemBuilder: (context) => widget.actions
           .map((action) => PopupMenuItem(
                 enabled: action.onTap != null,
                 onTap: action.onTap,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -276,13 +349,16 @@ class _MenuItem extends StatelessWidget {
                           : null,
                     ),
                     if (action.shortcut.isNotEmpty)
-                      Text(
-                        action.shortcut,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: action.onTap == null
-                              ? Theme.of(context).disabledColor
-                              : Theme.of(context).colorScheme.secondary,
+                      Padding(
+                        padding: const EdgeInsets.only(left: 24),
+                        child: Text(
+                          action.shortcut,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: action.onTap == null
+                                ? Theme.of(context).disabledColor
+                                : Theme.of(context).colorScheme.secondary,
+                          ),
                         ),
                       ),
                   ],
@@ -300,6 +376,39 @@ class _MenuAction {
   final VoidCallback? onTap;
 
   const _MenuAction(this.label, this.shortcut, this.onTap);
+}
+
+/// 关于对话框中的信息行
+class _AboutRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _AboutRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// 垂直分隔线

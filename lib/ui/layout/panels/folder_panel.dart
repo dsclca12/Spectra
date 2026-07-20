@@ -13,26 +13,53 @@ class FolderPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final foldersAsync = ref.watch(folderListProvider);
+    final theme = Theme.of(context);
 
     return Container(
-      color: Theme.of(context).canvasColor,
+      color: theme.canvasColor,
       child: Column(
         children: [
-          // 面板标题
+          // 面板标题栏
           Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '文件夹',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
+            decoration: BoxDecoration(
+              color: theme.canvasColor,
+              border: Border(
+                bottom: BorderSide(color: theme.dividerColor, width: 0.5),
               ),
             ),
+            child: Row(
+              children: [
+                Icon(Icons.folder_outlined,
+                    size: 14, color: theme.colorScheme.secondary),
+                const SizedBox(width: 6),
+                Text(
+                  '文件夹',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const Spacer(),
+                Tooltip(
+                  message: '导入文件夹 (Ctrl+I)',
+                  child: IconTheme(
+                    data: IconTheme.of(context).copyWith(size: 16),
+                    child: IconButton(
+                      icon: const Icon(Icons.add),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                          minWidth: 24, minHeight: 24),
+                      onPressed: () => _showImportPicker(context, ref),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Divider(height: 1, color: Theme.of(context).dividerColor),
           // 文件夹列表
           Expanded(
             child: foldersAsync.when(
@@ -45,6 +72,16 @@ class FolderPanel extends ConsumerWidget {
       ),
     );
   }
+
+  void _showImportPicker(BuildContext context, WidgetRef ref) async {
+    final dialog = DirectoryPicker()
+      ..title = '选择要导入的照片文件夹';
+
+    final result = dialog.getDirectory();
+    if (result != null) {
+      await ref.read(importProvider.notifier).importFolder(result.path);
+    }
+  }
 }
 
 class _FolderList extends ConsumerWidget {
@@ -55,26 +92,35 @@ class _FolderList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (folders.isEmpty) {
+      final theme = Theme.of(context);
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.folder_open, size: 48,
-                  color: Theme.of(context).colorScheme.secondary),
-              const SizedBox(height: 8),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.folder_open, size: 28,
+                    color: theme.colorScheme.secondary),
+              ),
+              const SizedBox(height: 12),
               Text(
                 '还没有导入文件夹',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: theme.colorScheme.secondary,
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () => _showImportPicker(context, ref),
-                icon: const Icon(Icons.folder, size: 16),
+                icon: const Icon(Icons.folder_open, size: 16),
                 label: const Text('导入文件夹'),
               ),
             ],
@@ -116,33 +162,46 @@ class _FolderTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentFolderId = ref.watch(currentFolderProvider);
     final isSelected = currentFolderId == folder.id;
+    final theme = Theme.of(context);
 
     return ListTile(
       dense: true,
       leading: Icon(
-        isSelected ? Icons.folder_open : Icons.folder,
+        isSelected ? Icons.folder_open : Icons.folder_outlined,
         size: 18,
         color: isSelected
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.secondary,
+            ? theme.colorScheme.primary
+            : theme.colorScheme.secondary,
       ),
       title: Text(
         folder.name,
         style: TextStyle(
           fontSize: 13,
           color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface,
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        '${folder.photoCount} 张',
-        style: TextStyle(
-          fontSize: 11,
-          color: Theme.of(context).colorScheme.secondary,
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.2)
+              : theme.hoverColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '${folder.photoCount}',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.secondary,
+          ),
         ),
       ),
       selected: isSelected,

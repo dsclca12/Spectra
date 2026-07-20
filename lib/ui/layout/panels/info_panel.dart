@@ -54,27 +54,78 @@ class InfoPanel extends ConsumerWidget {
   }
 
   Widget _EmptyInfoPanel(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      color: Theme.of(context).canvasColor,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.info_outline, size: 48,
-                  color: Theme.of(context).colorScheme.secondary),
-              const SizedBox(height: 8),
-              Text(
-                '选择一张照片查看详情',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                  fontSize: 12,
+      color: theme.canvasColor,
+      child: Column(
+        children: [
+          _PanelHeader(title: '信息'),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.info_outline, size: 30,
+                          color: theme.colorScheme.secondary),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '选择一张照片查看详情',
+                      style: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 面板标题栏
+class _PanelHeader extends StatelessWidget {
+  final String title;
+
+  const _PanelHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: theme.canvasColor,
+        border: Border(
+          bottom: BorderSide(color: theme.dividerColor, width: 0.5),
         ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -89,63 +140,70 @@ class _PhotoInfoContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
       children: [
-        // 预览图（单图模式下隐藏，避免与主图区域重复）
-        if (showPreview) ...[
-          _PreviewImage(photo: photo),
-          const SizedBox(height: 16),
-        ],
+        const _PanelHeader(title: '信息'),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              // 预览图（单图模式下隐藏，避免与主图区域重复）
+              if (showPreview) ...[
+                _PreviewImage(photo: photo),
+                const SizedBox(height: 16),
+              ],
 
-        // 基本信息
-        _SectionTitle(title: '基本信息'),
-        _InfoRow('文件名', photo.fileName),
-        _InfoRow('尺寸', photo.formattedResolution),
-        _InfoRow('大小', photo.formattedFileSize),
-        _InfoRow('修改日期', _formatDateTime(photo.modifiedAt)),
-        const SizedBox(height: 12),
+              // 基本信息
+              _SectionTitle(title: '基本信息'),
+              _InfoRow('文件名', photo.fileName),
+              _InfoRow('尺寸', photo.formattedResolution),
+              _InfoRow('大小', photo.formattedFileSize),
+              _InfoRow('修改日期', _formatDateTime(photo.modifiedAt)),
+              const SizedBox(height: 12),
 
-        // EXIF
-        _SectionTitle(title: 'EXIF'),
-        MetadataView(photo: photo),
-        const SizedBox(height: 12),
+              // EXIF
+              _SectionTitle(title: 'EXIF'),
+              MetadataView(photo: photo),
+              const SizedBox(height: 12),
 
-        // GPS
-        if (photo.latitude != null && photo.longitude != null) ...[
-          _SectionTitle(title: 'GPS'),
-          _InfoRow('纬度', '${photo.latitude!.toStringAsFixed(4)}°'),
-          _InfoRow('经度', '${photo.longitude!.toStringAsFixed(4)}°'),
-          if (photo.altitude != null)
-            _InfoRow('海拔', '${photo.altitude!.toStringAsFixed(1)} m'),
-          const SizedBox(height: 12),
-        ],
+              // GPS
+              if (photo.latitude != null && photo.longitude != null) ...[
+                _SectionTitle(title: 'GPS'),
+                _InfoRow('纬度', '${photo.latitude!.toStringAsFixed(4)}°'),
+                _InfoRow('经度', '${photo.longitude!.toStringAsFixed(4)}°'),
+                if (photo.altitude != null)
+                  _InfoRow('海拔', '${photo.altitude!.toStringAsFixed(1)} m'),
+                const SizedBox(height: 12),
+              ],
 
-        // 分类信息
-        _SectionTitle(title: '分类'),
-        _InfoRow('评分', ''),
-        StarRating(
-          rating: photo.rating,
-          starSize: 20,
-          onChanged: (value) async {
-            final catalogService = ref.read(catalogServiceProvider);
-            await catalogService.setRating(photo.id, value);
-            ref.invalidate(photoByIdProvider(photo.id));
-            ref.invalidate(catalogProvider);
-          },
-        ),
-        const SizedBox(height: 8),
-        _InfoRow('旗标', _pickLabelName(photo.pickLabel)),
-        const SizedBox(height: 8),
-        _InfoRow('色标', ''),
-        ColorLabelSelector(
-          colorLabel: photo.colorLabel,
-          onChanged: (value) async {
-            final catalogService = ref.read(catalogServiceProvider);
-            await catalogService.setColorLabel(photo.id, value);
-            ref.invalidate(photoByIdProvider(photo.id));
-            ref.invalidate(catalogProvider);
-          },
+              // 分类信息
+              _SectionTitle(title: '分类'),
+              _InfoRow('评分', ''),
+              StarRating(
+                rating: photo.rating,
+                starSize: 20,
+                onChanged: (value) async {
+                  final catalogService = ref.read(catalogServiceProvider);
+                  await catalogService.setRating(photo.id, value);
+                  ref.invalidate(photoByIdProvider(photo.id));
+                  ref.invalidate(catalogProvider);
+                },
+              ),
+              const SizedBox(height: 8),
+              _InfoRow('旗标', _pickLabelName(photo.pickLabel)),
+              const SizedBox(height: 8),
+              _InfoRow('色标', ''),
+              ColorLabelSelector(
+                colorLabel: photo.colorLabel,
+                onChanged: (value) async {
+                  final catalogService = ref.read(catalogServiceProvider);
+                  await catalogService.setColorLabel(photo.id, value);
+                  ref.invalidate(photoByIdProvider(photo.id));
+                  ref.invalidate(catalogProvider);
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -173,14 +231,16 @@ class _PreviewImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     return Container(
       height: 200,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(4),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: theme.dividerColor, width: 0.5),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
         child: ThumbnailWidget(
           photoId: photo.id,
           filePath: photo.path,
@@ -199,15 +259,30 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+      padding: const EdgeInsets.only(bottom: 8, top: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 12,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

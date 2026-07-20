@@ -11,6 +11,7 @@ class StatusBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final countAsync = ref.watch(photoCountProvider);
     // 用 select 隔离 — 只在选中数量变化时重建，而非整个 SelectionState 变化
     final selectionCount = ref.watch(
@@ -31,13 +32,13 @@ class StatusBar extends ConsumerWidget {
     );
 
     return Container(
-      height: 28,
+      height: 26,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).canvasColor,
+        color: theme.canvasColor,
         border: Border(
           top: BorderSide(
-            color: Theme.of(context).dividerColor,
+            color: theme.dividerColor,
             width: 0.5,
           ),
         ),
@@ -45,26 +46,38 @@ class StatusBar extends ConsumerWidget {
       child: Row(
         children: [
           // 选中数量
-          if (selectionCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Text(
-                '选中 $selectionCount 张',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+          if (selectionCount > 0) ...[
+            Icon(Icons.check_circle_outline,
+                size: 13, color: theme.colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              '选中 $selectionCount 张',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
             ),
+            const SizedBox(width: 12),
+            _StatusDivider(),
+          ],
 
           // 照片总数
           countAsync.when(
-            data: (count) => Text(
-              '共 $count 张',
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
+            data: (count) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.photo_library_outlined,
+                    size: 13, color: theme.colorScheme.secondary),
+                const SizedBox(width: 4),
+                Text(
+                  '共 $count 张',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ],
             ),
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
@@ -72,38 +85,46 @@ class StatusBar extends ConsumerWidget {
 
           // 导入进度
           if (importActive) ...[
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
+            _StatusDivider(),
+            const SizedBox(width: 12),
             SizedBox(
-              width: 14,
-              height: 14,
+              width: 12,
+              height: 12,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(width: 6),
-            Text(
-              importCurrentFile != null
-                  ? '正在导入: $importCurrentFile'
-                  : '正在扫描...',
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.secondary,
+            Flexible(
+              child: Text(
+                importCurrentFile != null
+                    ? '正在导入: $importCurrentFile'
+                    : '正在扫描...',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.secondary,
+                ),
               ),
             ),
           ],
 
-          if (importStatus == ImportStatus.completed)
-            Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Text(
-                '导入完成: $importImported 张',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
+          if (importStatus == ImportStatus.completed) ...[
+            const SizedBox(width: 12),
+            _StatusDivider(),
+            const SizedBox(width: 12),
+            Icon(Icons.check_circle, size: 13, color: Colors.green),
+            const SizedBox(width: 4),
+            Text(
+              '导入完成: $importImported 张',
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.secondary,
               ),
             ),
+          ],
 
           const Spacer(),
 
@@ -112,11 +133,23 @@ class StatusBar extends ConsumerWidget {
             'Spectra v0.1.0',
             style: TextStyle(
               fontSize: 11,
-              color: Theme.of(context).colorScheme.secondary,
+              color: theme.colorScheme.secondary,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 状态栏分隔符
+class _StatusDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 12,
+      color: Theme.of(context).dividerColor,
     );
   }
 }
