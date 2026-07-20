@@ -51,9 +51,15 @@ class GridPanel extends ConsumerWidget {
   }
 
   void _showImportDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => const ImportDialog(),
-    );
+    showImportDialog(context);
   }
+}
+
+/// 通用导入对话框快捷函数 — HomeScreen 和 GridPanel 共用
+/// 避免两处维护相同的 dialog show 代码
+void showImportDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (_) => const ImportDialog(),
+  );
 }
