@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: Spectra
+message: "If you use Spectra in your research, please cite it as below."
+type: software
+authors:
+  - family-names: "dsclca12"
+    given-names: ""
+    email: "aobg@ey.com"
+    orcid: ""
+repository-code: "https://github.com/dsclca12/Spectra"
+license: Apache-2.0
+version: 0.1.0
+date-released: 2026-07-20
