@@ -6,12 +6,44 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - "**/*.drift.dart"
+  errors:
+    invalid_annotation_target: ignore
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
 
 linter:
   rules:
+    # ── Style ──
     - prefer_const_constructors
     - prefer_const_literals_to_create_immutables
     - prefer_final_locals
     - prefer_single_quotes
     - sort_child_properties_last
     - use_key_in_widget_constructors
+    - avoid_print
+    - avoid_redundant_argument_values
+    - cascade_invocations
+    - curly_braces_in_flow_control_structures
+    - join_return_with_assignment
+    - lines_longer_than_80_chars: false
+    - only_throw_errors
+    - prefer_asserts_with_message
+    - prefer_const_declarations
+    - prefer_contains
+    - prefer_final_parameters
+    - prefer_if_elements_to_conditional_expressions
+    - prefer_null_aware_operators
+    - require_trailing_commas
+    - sized_box_for_whitespace
+    - sort_constructors_first
+    - sort_pub_dependencies
+    - type_annotate_public_apis
+    - unawaited_futures
+    - unnecessary_await_in_return
+    - unnecessary_lambdas
+    - unnecessary_raw_strings
+    - use_super_parameters
+    - void_checks
