@@ -1,7 +1,7 @@
 name: spectra
 description: "面向专业摄影师的 Windows 桌面端照片分类与资产管理（DAM）应用"
 publish_to: "none"
-version: 0.4.0
+version: 0.4.2
 
 homepage: https://github.com/dsclca12/Spectra
 repository: https://github.com/dsclca12/Spectra.git
@@ -88,6 +88,6 @@ msix_config:
   display_name: Spectra
   publisher_display_name: Spectra Project
   identity_name: com.spectra.app
-  msix_version: 0.4.0.0
+  msix_version: 0.4.2.0
   logo_path: assets/icons/app_icon.png
   capabilities: broadFileSystemAccess

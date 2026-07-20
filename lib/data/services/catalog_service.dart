@@ -35,13 +35,21 @@ class CatalogService {
     );
   }
 
-  /// Count photos.
+  /// 统计照片数量 — 与 queryPhotos 的筛选逻辑保持一致。
+  ///
+  /// 传递全部筛选参数给 DAO，确保计数与列表查询结果一致。
+  /// 扩展了 dateFrom/dateTo/cameraModel/searchQuery 参数，
+  /// 以便在搜索或筛选时状态栏显示精确的计数。
   Future<int> countPhotos({int? folderId, required PhotoFilter filter}) {
     return _photoDao.countFiltered(
       folderId: filter.folderId ?? folderId,
       minRating: filter.minRating,
       pickLabel: filter.pickLabel,
       colorLabels: filter.colorLabels,
+      dateFrom: filter.dateFrom,
+      dateTo: filter.dateTo,
+      cameraModel: filter.cameraModel,
+      searchQuery: filter.searchQuery,
     );
   }
 

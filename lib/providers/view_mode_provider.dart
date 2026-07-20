@@ -11,7 +11,15 @@ enum ThumbSize { small, medium, large }
 /// 排序方式
 enum SortBy { dateTaken, importedAt, rating, fileName }
 
-/// 视图状态
+/// 视图状态 — 控制主界面的布局和显示选项。
+///
+/// ⚡ 性能设计：
+/// - UI 组件通过 select() 只监听自己关心的字段，避免全状态重建。
+///   - PhotoGrid: `select((vm) => vm.thumbPixelSize)` 只在缩略图尺寸变化时重建
+///   - GridPanel: `select((vm) => vm.mode)` 只在网格/列表/预览模式切换时重建
+///   - StatusBar: 不 watch ViewModeState，不受视图变化影响
+/// - 左栏宽度 leftPanelWidth 可拖拽调节，通过 DraggableDivider + setLeftPanelWidth 更新
+/// - 胶片条高度 filmstripHeight 同理，仅在 Preview 模式显示
 class ViewModeState {
   final ViewMode mode;
   final ThumbSize thumbSize;

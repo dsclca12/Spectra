@@ -5,14 +5,19 @@ import 'package:exif/exif.dart';
 
 import '../database/app_database.dart';
 
-/// 元数据服务 — EXIF 读取
+/// 元数据服务 — EXIF 读取与解析
 ///
-/// 性能策略：
-/// - 先读取文件头部（前 64KB）快速获取图像尺寸和 MIME 类型
-/// - 完整 EXIF 解析使用 `exif` 包的 `readExifFromFile`，只读取文件的 EXIF 相关部分
-///   （避免将整个 RAW 文件加载到内存，对大文件尤其重要）
-/// - RAW 格式（CR2/NEF/ARW 等）的 EXIF 由 `exif` 包从文件头解析
-/// - GPS、相机参数等完整 EXIF 字段在后台 Isolate 中解析，不阻塞 UI
+/// ⚡ 性能策略：
+/// - 第一阶段：只读文件头前 64KB 快速获取图像尺寸和 MIME 类型。
+///   对于 JPEG 文件，EXIF 信息通常在前 64KB 内（APP1 标记段）。
+///   对于 RAW 文件（20-100MB），避免加载整个文件到内存。
+/// - 第二阶段：使用 exif 包的 readExifFromFile（RandomAccessFile），
+///   只读取文件的 EXIF 相关区域，不加载整个文件。
+///   （旧实现用 readAsBytes + readExifFromBytes 把整个 RAW 文件读到内存）
+/// - IPTC 字段（标题/描述/关键词）当前未从文件中读取，
+///   仅数据库字段预留。后续可通过 ExifTool 或 Windows WIC 的
+///   QueryCapabilities 获取。
+/// - GPS 坐标采用 DMS→十进制度数转换，精度保留 6 位小数（约 0.1 米）。
 class MetadataService {
   MetadataService();
 

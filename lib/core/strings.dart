@@ -20,7 +20,7 @@ class AppStrings {
   static const String appName = 'Spectra';
   // 与 pubspec.yaml / version.json / constants.dart 保持同步
   // 发布前使用 scripts/build.ps1 统一更新所有版本号
-  static const String appVersion = '0.4.1';
+  static const String appVersion = '0.4.2';
   static const String appDescription =
       'Photo categorization & asset management for professional photographers on Windows';
   static const String appLicense = 'Apache 2.0';

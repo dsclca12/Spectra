@@ -170,12 +170,13 @@ class PhotoDao extends DatabaseAccessor<AppDatabase> with _$PhotoDaoMixin {
     return query.get();
   }
 
-  /// 计数
+  /// 获取照片总数。
   Future<int> countAll() async {
     final result = await (selectOnly(photos)..addColumns([photos.id.count()])).get();
     return result.first.read(photos.id.count()) ?? 0;
   }
 
+  /// 按文件夹统计照片数量。
   Future<int> countByFolder(int folderId) async {
     final count = await
         (selectOnly(photos)..addColumns([photos.id.count()])
@@ -183,11 +184,24 @@ class PhotoDao extends DatabaseAccessor<AppDatabase> with _$PhotoDaoMixin {
     return count.first.read(photos.id.count()) ?? 0;
   }
 
+  /// 按筛选条件统计照片数量。
+  ///
+  /// 与 [queryFiltered] 的筛选逻辑保持一致，
+  /// 但只返回计数不返回数据，用于分页和状态栏显示。
+  ///
+  /// ⚡ 性能注意：
+  /// - 使用 SELECT COUNT(*) 而非加载所有行，数据库层面计算。
+  /// - 仅支持部分常用筛选条件（folderId/minRating/pickLabel/colorLabels），
+  ///   如需更精确的计数（如带搜索关键字），可扩展此方法。
   Future<int> countFiltered({
     int? folderId,
     int? minRating,
     int? pickLabel,
     List<int>? colorLabels,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? cameraModel,
+    String? searchQuery,
   }) async {
     final query = selectOnly(photos)..addColumns([photos.id.count()]);
 
@@ -202,6 +216,26 @@ class PhotoDao extends DatabaseAccessor<AppDatabase> with _$PhotoDaoMixin {
     }
     if (colorLabels != null && colorLabels.isNotEmpty) {
       query.where(photos.colorLabel.isIn(colorLabels));
+    }
+    if (dateFrom != null && dateTo != null) {
+      query.where(photos.dateTaken.isBetweenValues(dateFrom, dateTo));
+    } else if (dateFrom != null) {
+      query.where(photos.dateTaken.isBiggerOrEqualValue(dateFrom));
+    } else if (dateTo != null) {
+      query.where(photos.dateTaken.isSmallerOrEqualValue(dateTo));
+    }
+    if (cameraModel != null && cameraModel.isNotEmpty) {
+      query.where(photos.cameraModel.like('%$cameraModel%'));
+    }
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final pattern = '%$searchQuery%';
+      query.where(
+        photos.fileName.like(pattern) |
+        photos.iptcTitle.like(pattern) |
+        photos.iptcDescription.like(pattern) |
+        photos.iptcKeywords.like(pattern) |
+        photos.cameraModel.like(pattern),
+      );
     }
 
     final result = await query.get();

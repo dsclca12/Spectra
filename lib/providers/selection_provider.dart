@@ -1,6 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 多选状态管理
+/// 照片多选状态管理。
+///
+/// ⚡ 性能设计：
+/// - UI 组件通过 `ref.watch(selectionProvider.select((s) => s.isSelected(id)))`
+///   只监听单个照片的选中状态，避免整个网格重建。
+/// - Set<int> 的 contains() 是 O(1) 操作，适合高频 build 调用。
+/// - toList().indexOf() 在网格项中已被替换为直接遍历 Set 查找选中序号。
+///
+/// 选中序号计算：
+/// ```dart
+/// int orderIndex(Set<int> ids, int photoId) {
+///   int idx = 0;
+///   for (final id in ids) {
+///     if (id == photoId) return idx;
+///     idx++;
+///   }
+///   return -1;
+/// }
+/// ```
 class SelectionState {
   final Set<int> selectedIds;
   final int? lastSelectedId;
