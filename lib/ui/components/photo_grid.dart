@@ -11,7 +11,19 @@ import '../screens/viewer_screen.dart';
 import 'color_label.dart';
 import 'thumbnail_widget.dart';
 
-/// 照片网格视图
+/// 照片网格视图 — 主界面中栏的核心组件。
+///
+/// ⚡ 性能设计要点：
+/// 1. **select 隔离**：只监听 thumbPixelSize，面板可见性/胶片条高度等变化不重建网格
+/// 2. **LayoutBuilder 替代 MediaQuery**：获取实际可用宽度而非屏幕宽度，
+///    侧栏切换时列数计算不受影响
+/// 3. **scrollCacheExtent: 500px**：默认 250px 太小，滚动频繁创建/销毁项
+///    500px 预渲染更多屏幕外项目，滚动更流畅
+/// 4. **RepaintBoundary**：每个网格项独立隔离重绘范围
+/// 5. **Selector 选中状态**：`select((s) => s.isSelected(photo.id))` 只监听自身
+/// 6. **ConsumerStatefulWidget + gaplessPlayback**：缩略图尺寸切换时保持显示旧图
+///
+/// 参见：_PhotoGridItem, ThumbnailWidget, photo_grid_item
 class PhotoGrid extends ConsumerWidget {
   final List<Photo> photos;
 
@@ -34,8 +46,10 @@ class PhotoGrid extends ConsumerWidget {
 
         return GridView.builder(
           padding: const EdgeInsets.all(4),
-          // 增加 scrollCacheExtent 预渲染屏幕外项目，滚动时更流畅
-          // 默认 250px 太小，滚动时频繁创建/销毁项导致卡顿
+          // scrollCacheExtent: 增加预渲染范围，滚动更流畅。
+          // 默认 250px 太小，滚动时频繁创建/销毁项导致卡顿。
+          // 500px 约 2-3 行额外预渲染，内存增加可控。
+          // Flutter 3.44+ cacheExtent 已废弃，使用 ScrollCacheExtent。
           scrollCacheExtent: const ScrollCacheExtent.pixels(500),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,

@@ -94,7 +94,16 @@ class SettingKeys {
   static const aiAnalysisSize = 'ai.analysisSize';     // 自动调整分析尺寸
 }
 
-/// 应用设置状态
+/// 应用设置状态 — 持久化到数据库 AppSettings 表。
+///
+/// 所有字段都有默认值，首次启动时自动初始化。
+/// 用户通过设置界面修改后，自动保存到数据库。
+///
+/// ⚡ 性能设计：
+/// - 设置值在内存中缓存，不每次读取数据库。
+/// - 通过 StateNotifier 管理，修改后自动通知监听者。
+/// - 默认值在 AppSettingsState 构造函数中定义，
+///   数据库中没有对应键值时使用默认值。
 class AppSettingsState {
   // 外观
   final String themeMode; // dark / light / system

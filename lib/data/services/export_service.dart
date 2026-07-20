@@ -4,15 +4,22 @@ import 'package:path/path.dart' as p;
 
 import '../../core/concurrency.dart';
 
-/// Export service — copies photos to a target directory.
+/// 导出服务 — 将照片复制到目标目录。
 ///
-/// Supports filter-based export (including rating filters), optionally preserving
-/// original directory structure or flattening.
+/// 支持按筛选条件导出，可选保持原始目录结构或扁平化。
 ///
-/// 性能策略：
-/// - 使用 Semaphore(4) 限制并行复制数，避免同时读写大量文件导致 I/O 饱和。
-/// - 大文件（>50MB）逐张串行复制避免内存压力，小文件批量并行。
-/// - 目标文件夹只创建一次，避免逐文件重复检查 exists()。
+/// ⚡ 性能策略：
+/// - Semaphore(4) 限制并行复制数：Windows 上过多并行文件 I/O 会
+///   导致磁盘控制器队列过深，反而降低吞吐量。4 路并行在 HDD/SSD 上都表现良好。
+/// - 目标文件夹只在开始时创建一次，避免逐文件重复检查 exists()。
+/// - Future.wait 批量提交复制任务 + 信号量内部排队 = 4 路并行 + 自动排队。
+/// - 文件名冲突：追加计数器后缀（"文件名 (1).ext"），而非覆盖。
+///
+/// ⚠️ 已知限制：
+/// - 当前只做文件复制，不做格式转换或编辑烘焙。
+/// - 如果用户需要导出编辑后的照片（带 EditParams），需先通过
+///   ImageEditService.bakeAndExport 烘焙后再导出。
+/// - RAW/HEIC 格式直接复制原始文件，不支持导出为 JPEG/PNG。
 class ExportService {
   /// 并行复制信号量 — 限制同时进行的文件复制操作。
   /// Windows 上过多并行文件 I/O 可能导致磁盘控制器队列过深，

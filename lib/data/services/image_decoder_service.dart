@@ -7,22 +7,28 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/concurrency.dart';
 
-/// Image decoding service — unified decoding for various image formats.
+/// 统一图像解码服务 — 为不同格式提供统一的解码入口。
 ///
-/// Decoding strategy:
-/// - **Standard formats** (JPEG/PNG/WebP/BMP/GIF): Uses `dart:ui` native decoder (Skia/Impeller)
-///   - Executes on native thread asynchronously, doesn't block UI
-///   - `targetWidth` parameter decodes directly to target size, avoiding full-resolution decode
-///   - 10-50x faster than `package:image`, 90%+ less memory usage
+/// 解码策略：
 ///
-/// - **RAW/HEIC/HEIF/AVIF/TIFF**: Uses Windows WIC (Windows Imaging Component)
-///   - Accessed via PowerShell + WPF (PresentationCore)
-///   - WIC is a built-in Windows component, no extra software required
-///   - Requires corresponding codec packs:
-///     - HEIC: "HEIF Image Extensions" (Microsoft Store, free)
-///     - RAW: "Raw Image Extension" or camera vendor codec packs (Microsoft Store, free)
-///   - Decoded results saved as PNG to avoid re-decoding
-///   - Semaphore limits concurrent PowerShell processes to prevent process explosion
+/// **标准格式（JPEG/PNG/WebP/BMP/GIF）**：使用 `dart:ui` 原生解码器（Skia/Impeller）
+///   - 在 native 线程异步执行，不阻塞 UI 线程。
+///   - `targetWidth` 参数让解码器直接解码到目标尺寸，无需解码全分辨率。
+///   - 比 `package:image` 快 10-50 倍，内存占用降低 90%+。
+///   - 不使用 Isolate.run — 原生解码本身就在 native 线程执行。
+///   - 编码输出使用 `image.toByteData(format: ImageByteFormat.png)`。
+///
+/// **RAW/HEIC/HEIF/AVIF/TIFF**：使用 Windows WIC（Windows Imaging Component）
+///   - 通过 PowerShell + WPF (PresentationCore) 的 BitmapImage 访问 WIC。
+///   - WIC 是 Windows 内置组件，但需要安装对应 codec pack：
+///     - HEIC/HEIF/AVIF："HEIF Image Extensions"（Microsoft Store 免费）
+///     - RAW（CR2/NEF/ARW/DNG 等）："Raw Image Extension"（Microsoft Store 免费）
+///     - 相机厂商也提供专用 codec pack（Canon/Nikon/Sony 等）
+///   - 解码结果保存为 PNG 缓存，避免重复解码。
+///   - Semaphore(6) 限制并发 PowerShell 进程数，每个约 30-50MB 内存。
+///
+/// ⚠️ 注意：当前使用 PowerShell 调用 WIC 的方式有启动延迟（~200ms 每进程），
+/// 中长期应考虑 C++/WinRT 直接绑定 Windows WIC API 以消除延迟。
 class ImageDecoderService {
   ImageDecoderService();
 

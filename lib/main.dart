@@ -32,10 +32,15 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSize = 2000;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 500 * 1024 * 1024;
 
-  // ── Windows stylus/touch differentiation service ──
-  // Receives WM_POINTER events from the C++ layer via EventChannel,
-  // allowing the viewer to distinguish stylus from touch input:
-  // stylus controls cropping, touch maintains gestures.
+  // ── Windows 手写笔/触摸输入区分服务 ──
+  // 从 C++ 层 (windows/runner/flutter_window.cpp) 通过 EventChannel
+  // spnext/pointer_type 接收 WM_POINTER 事件，用于单图查看器中
+  // 区分手写笔和触摸输入：手写笔控制裁剪，触摸保持手势。
+  //
+  // ⚠️ 注意：PointerTypeService.dispose() 在当前架构中未被显式调用。
+  // 由于是单例且在应用退出时释放，且 EventChannel 是静态注册的，
+  // 不释放不会造成资源泄漏。如需更严格的资源管理，可在窗口关闭
+  // 处理器中添加 dispose 调用。
   // No-op on non-Windows platforms.
   PointerTypeService().initialize();
 
