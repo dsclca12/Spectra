@@ -4,5 +4,5 @@
   "buildCommit": "async-directory-walk",
   "channel": "stable",
   "name": "Spectra",
-  "description": "专业摄影师的 Windows 桌面端照片分类与资产管理应用"
+  "description": "跨平台（Windows/Linux）桌面端照片分类与资产管理应用"
 }

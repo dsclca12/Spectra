@@ -10,7 +10,7 @@
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
   </picture>
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue?style=flat-square">
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.29+-blue?style=flat-square&logo=flutter">
   <img alt="License" src="https://img.shields.io/github/license/dsclca12/Spectra?style=flat-square">
   <img alt="Stars" src="https://img.shields.io/github/stars/dsclca12/Spectra?style=flat-square">
@@ -19,11 +19,13 @@
   <img alt="Issues" src="https://img.shields.io/github/issues/dsclca12/Spectra?style=flat-square">
 </p>
 
-**面向专业摄影师的 Windows 桌面端照片分类与资产管理（DAM）应用**
+**面向专业摄影师的跨平台（Windows / Linux）桌面端照片分类与资产管理（DAM）应用**
 
 > 分类优先，编辑交给专业工具。
 
 Spectra 聚焦于摄影师工作流中最耗时的环节：**导入 → 筛选 → 标注 → 归档 → 搜索**。不做 RAW 编辑，而是作为 Lightroom / Capture One / Photoshop 等编辑工具的前置流程，帮助摄影师在拍摄后以最快速度完成照片的筛选和分类。
+
+> 🐧 **Linux 支持**：Spectra 目前已支持 Linux 桌面端构建（Flutter Linux），最新 release 提供 `*-linux-x64.tar.gz` 下载。
 
 ---
 
@@ -43,6 +45,7 @@ Spectra 聚焦于摄影师工作流中最耗时的环节：**导入 → 筛选 �
 | 📦 **批量操作** | 多选后批量评分、批量标签、批量旗标 |
 | 🗂️ **SQLite 目录** | Drift ORM 驱动的分类数据库，增量扫描，秒级启动 |
 | 📸 **多格式支持** | JPEG/PNG/WebP/BMP/GIF + HEIC/HEIF/AVIF + TIFF + 各厂 RAW（见下表） |
+| 🐧 **Linux 支持** | Flutter Linux 桌面端，AppImage / tar.gz 发布 |
 
 ### Phase 2 — 专业工作流
 
@@ -99,18 +102,23 @@ RAW 和 HEIC 格式需要安装 Windows codec pack 才能生成缩略图和预�
 
 ### 🔧 从源码构建
 
-#### 环境要求
+#### Windows 构建
+
+##### 环境要求
 
 - **Flutter**: 3.29+（Windows Stable 通道）
 - **Windows**: Windows 10 20H2 或更高版本 / Windows 11
 - **工具**: Visual Studio 2022（含"C++ 桌面开发"工作负载）
 
-#### 构建步骤
+##### 构建步骤
 
 ```powershell
 # 克隆项目
 git clone https://github.com/dsclca12/Spectra.git
 cd spectra
+
+# 启用 Windows 桌面支持
+flutter config --enable-windows-desktop
 
 # 获取依赖
 flutter pub get
@@ -122,15 +130,48 @@ flutter run -d windows
 flutter build windows --release
 ```
 
-### 开发环境配置
+#### Linux 构建
 
-```powershell
-# 启用 Windows 桌面支持
-flutter config --enable-windows-desktop
+##### 环境要求
 
-# 验证配置
-flutter doctor -v
+- **Flutter**: 3.29+（Linux Stable 通道）
+- **Linux**: Ubuntu 20.04+ / Debian 11+ / Fedora 38+ 等
+- **工具**: `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`
+
+##### 安装 Linux 系统依赖
+
+```bash
+# Debian / Ubuntu
+sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 ```
+
+##### 构建步骤
+
+```bash
+# 克隆项目
+git clone https://github.com/dsclca12/Spectra.git
+cd spectra
+
+# 启用 Linux 桌面支持
+flutter config --enable-linux-desktop
+
+# 获取依赖
+flutter pub get
+
+# 一行脚本：构建原生库 + Flutter Linux release
+./scripts/build.sh release
+
+# 或者手动分步执行：
+# 1. 构建原生 C 库
+./scripts/build.sh native
+# 2. 构建 Flutter Linux 发布包
+flutter build linux --release
+# 3. 打包为 tar.gz
+cd build/linux/x64/release
+tar czf spectra-$(date +%Y%m%d)-linux-x64.tar.gz bundle/
+```
+
+构建产物位于 `build/linux/x64/release/bundle/`，包含 `spectra` 可执行文件及所有依赖。
 
 ---
 

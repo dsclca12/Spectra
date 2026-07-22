@@ -28,10 +28,91 @@ jobs:
         run: flutter build windows --release
 
       - name: Package artifacts
+        shell: pwsh
         run: |
           Compress-Archive `
             -Path build\windows\x64\runner\Release\* `
             -DestinationPath "spectra-${{ github.ref_name }}-windows-x64.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: spectra-${{ github.ref_name }}-windows-x64.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.29.x
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build native C libraries
+        run: |
+          mkdir -p native/ort_bridge/build
+          cmake -S native/ort_bridge -B native/ort_bridge/build \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build native/ort_bridge/build
+
+          mkdir -p native/preprocess/build
+          cmake -S native/preprocess -B native/preprocess/build \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build native/preprocess/build
+
+      - name: Build Linux release
+        run: flutter build linux --release
+
+      - name: Copy native libraries into bundle
+        run: |
+          cp -v native/ort_bridge/build/libort_bridge.so \
+            build/linux/x64/release/bundle/
+          cp -v native/preprocess/build/libnchw_preprocess.so \
+            build/linux/x64/release/bundle/
+
+      - name: Package artifacts
+        run: |
+          cd build/linux/x64/release
+          tar czf "${{ github.workspace }}/spectra-${{ github.ref_name }}-linux-x64.tar.gz" \
+            bundle/
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: spectra-${{ github.ref_name }}-linux-x64.tar.gz
+
+  create-release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Prepare release assets
+        run: |
+          ls -laR
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -39,5 +120,6 @@ jobs:
           name: Spectra ${{ github.ref_name }}
           body_path: CHANGELOG.md
           files: |
-            spectra-${{ github.ref_name }}-windows-x64.zip
+            windows-release/spectra-${{ github.ref_name }}-windows-x64.zip
+            linux-release/spectra-${{ github.ref_name }}-linux-x64.tar.gz
           fail_on_unmatched_files: true

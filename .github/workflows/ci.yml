@@ -68,3 +68,43 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           fail_ci_if_error: false
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build native C libraries
+        run: |
+          mkdir -p native/ort_bridge/build
+          cmake -S native/ort_bridge -B native/ort_bridge/build \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build native/ort_bridge/build
+
+          mkdir -p native/preprocess/build
+          cmake -S native/preprocess -B native/preprocess/build \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build native/preprocess/build
+
+      - name: Build Linux release
+        run: flutter build linux --release

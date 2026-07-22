@@ -5,7 +5,7 @@
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/dsclca12/Spectra?style=flat-square&label=Release&color=blue">
   </picture>
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue?style=flat-square">
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.29+-blue?style=flat-square&logo=flutter">
   <img alt="License" src="https://img.shields.io/github/license/dsclca12/Spectra?style=flat-square">
   <img alt="Stars" src="https://img.shields.io/github/stars/dsclca12/Spectra?style=flat-square">
@@ -20,11 +20,13 @@
 </p>
 
 <p align="center">
-  <em>A Windows desktop photo categorization &amp; asset management (DAM) app for professional photographers.</em>
+  <em>A cross-platform (Windows / Linux) desktop photo categorization &amp; asset management (DAM) app for professional photographers.</em>
 </p>
 
 > **Classify first, edit with专业 tools.**  
 > Spectra focuses on the most time-consuming phase of a photographer's workflow: **import → cull → tag → archive → search**. It does NOT replace RAW editors — instead, it acts as a front-end workflow tool for Lightroom / Capture One / Photoshop, helping photographers cull and categorize photos at maximum speed after a shoot.
+
+> 🐧 **Linux Support**: Spectra now supports Linux desktop builds (Flutter Linux). Latest releases include `*-linux-x64.tar.gz` downloads.
 
 ---
 
@@ -44,6 +46,7 @@
 | 📦 **Batch Operations** | Batch rate, batch tag, batch flag for multi-selected photos |
 | 🗂️ **SQLite Catalog** | Drift ORM catalog DB, incremental scan, instant startup |
 | 📸 **Multi-Format** | JPEG/PNG/WebP/BMP/GIF + HEIC/HEIF/AVIF + TIFF + all major RAW formats |
+| 🐧 **Linux Support** | Flutter Linux desktop, AppImage / tar.gz distribution |
 
 ### Phase 2 — Professional Workflow 🔄
 
@@ -102,18 +105,23 @@ Get the latest build from [GitHub Releases](https://github.com/dsclca12/Spectra/
 
 ### 🔧 Build from Source
 
-#### Prerequisites
+#### Windows Build
+
+##### Prerequisites
 
 - **Flutter**: 3.29+ (Windows Stable channel)
 - **Windows**: Windows 10 20H2+ / Windows 11
 - **Tools**: Visual Studio 2022 (with "Desktop development with C++" workload)
 
-#### Steps
+##### Steps
 
 ```powershell
 # Clone
 git clone https://github.com/dsclca12/Spectra.git
 cd spectra
+
+# Enable Windows desktop
+flutter config --enable-windows-desktop
 
 # Dependencies
 flutter pub get
@@ -124,6 +132,49 @@ flutter run -d windows
 # Build release
 flutter build windows --release
 ```
+
+#### Linux Build
+
+##### Prerequisites
+
+- **Flutter**: 3.29+ (Linux Stable channel)
+- **Linux**: Ubuntu 20.04+ / Debian 11+ / Fedora 38+ etc.
+- **Tools**: `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`
+
+##### Install Linux system dependencies
+
+```bash
+# Debian / Ubuntu
+sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+```
+
+##### Build Steps
+
+```bash
+# Clone
+git clone https://github.com/dsclca12/Spectra.git
+cd spectra
+
+# Enable Linux desktop
+flutter config --enable-linux-desktop
+
+# Dependencies
+flutter pub get
+
+# One-liner: build native libs + Flutter Linux release
+./scripts/build.sh release
+
+# Or step by step:
+# 1. Build native C libraries
+./scripts/build.sh native
+# 2. Build Flutter Linux release
+flutter build linux --release
+# 3. Package as tar.gz
+cd build/linux/x64/release
+tar czf spectra-$(date +%Y%m%d)-linux-x64.tar.gz bundle/
+```
+
+The build output is in `build/linux/x64/release/bundle/`, containing the `spectra` executable and all dependencies.
 
 ---
 

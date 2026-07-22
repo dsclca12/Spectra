@@ -41,6 +41,9 @@ class ImageDecoderService {
   /// Each process uses ~30-50MB memory.
   final Semaphore _decoderSemaphore = Semaphore(4);
 
+  /// Semaphore to limit concurrent WIC (Windows) decoder processes.
+  final Semaphore _wicSemaphore = Semaphore(2);
+
   /// Flutter 原生支持的格式（dart:ui / Skia 可直接解码）
   static const Set<String> flutterSupportedExtensions = {
     'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'wbmp',
@@ -338,7 +341,7 @@ __WIDTH_LINE__
             final widthArgs = targetWidth != null
                 ? ['-vf', 'scale=$targetWidth:-1']
                 : <String>[];
-            final convertResult = await Process.run(
+            final convertProcess = await Process.start(
               'ffmpeg',
               [
                 '-y', '-f', 'image2pipe', '-c:v', 'ppm',
@@ -347,11 +350,11 @@ __WIDTH_LINE__
                 '-q:v', '1',
                 outputPath,
               ],
-              stdin: result.stdout as List<int>,
-              stdoutEncoding: null,
-              stderrEncoding: null,
             );
-            if (convertResult.exitCode == 0) {
+            convertProcess.stdin.add(result.stdout as List<int>);
+            await convertProcess.stdin.close();
+            final convertExitCode = await convertProcess.exitCode;
+            if (convertExitCode == 0) {
               if (await File(outputPath).exists()) return outputPath;
             }
           }
