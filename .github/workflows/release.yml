@@ -35,7 +35,7 @@ jobs:
             -DestinationPath "spectra-${{ github.ref_name }}-windows-x64.zip"
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-release
           path: spectra-${{ github.ref_name }}-windows-x64.zip
@@ -93,7 +93,7 @@ jobs:
             bundle/
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-release
           path: spectra-${{ github.ref_name }}-linux-x64.tar.gz
