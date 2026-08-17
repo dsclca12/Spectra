@@ -52,7 +52,7 @@ dependencies:
   # 工具
   crypto: ^3.0.6
   collection: ^1.18.0
-  vector_math: ^2.1.4
+  vector_math: ^2.4.2
 
 dev_dependencies:
   flutter_test:
