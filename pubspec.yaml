@@ -36,7 +36,7 @@ dependencies:
 
   # 文件与系统
   watcher: ^1.1.1
-  desktop_drop: ^0.5.0
+  desktop_drop: ^0.8.4
   file_picker: ^8.0.0
   window_manager: ^0.4.3
 
